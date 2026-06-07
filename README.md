@@ -1,108 +1,103 @@
 # VR Avatar Heart Watch Demo
 
-A lightweight demo template for a VR avatar that responds to Apple Watch heart-rate signals, with a web dashboard and simple database layer for recorded sessions.
+Lightweight repo template for a Quest 3 Unity VR avatar that reacts to Apple Watch heart-rate data, records everything in SQLite, and exposes a React web dashboard deployable to Vercel and GitHub Pages.
 
-## Demo Goal
+## Four Parts
 
-Build the smallest useful prototype with four visible parts:
+- **VR**: Unity + Quest 3 scripts in `unity/`, built to poll the latest heart-rate zone and update avatar mood.
+- **Sensor**: Apple Watch HealthKit bridge skeleton in `sensor/apple-watch/`, sending live heart-rate samples through iPhone to the API.
+- **Web Dashboard**: React + Vite app in `apps/web/`, with mock stream mode and API mode.
+- **Database**: SQLite schema and local API in `apps/api/`.
 
-- **VR**: a browser-based VR scene where a user can interact with an avatar.
-- **Sensor**: an Apple Watch heart-rate source, mocked first and replaceable with HealthKit/watchOS later.
-- **Web Dashboard**: a page that shows live heart rate, avatar responses, session events, and summaries.
-- **Database**: a local storage adapter first, with an easy migration path to SQLite/Supabase/Firebase.
-
-## Fastest Demo Plan
-
-### Phase 1: Static Prototype
-
-- Use plain HTML/CSS/JavaScript.
-- Use A-Frame from CDN for the VR scene.
-- Use a mock heart-rate stream to simulate Apple Watch data.
-- Save heart-rate samples, avatar messages, and session events into `localStorage`.
-- Show all records in a dashboard table and simple SVG chart.
-
-### Phase 2: Real Sensor Bridge
-
-- Build a small watchOS app that reads heart rate through HealthKit.
-- Send samples to the web app through one of:
-  - local WebSocket bridge during demo,
-  - iPhone companion app,
-  - cloud endpoint.
-- Keep the web app input contract identical to the mock stream:
-
-```json
-{
-  "source": "apple_watch",
-  "heartRate": 92,
-  "timestamp": "2026-06-07T13:30:00.000Z"
-}
-```
-
-### Phase 3: Real Database
-
-- Replace the `localStorage` database adapter with Supabase, Firebase, or SQLite.
-- Preserve the same domain entities:
-  - `heart_rate_samples`
-  - `avatar_messages`
-  - `vr_events`
-  - `sessions`
-
-### Phase 4: Rich VR Interaction
-
-- Replace the placeholder avatar with a real 3D model.
-- Add voice input/output.
-- Add avatar emotion states based on heart-rate zones.
-- Add session replay in the dashboard.
-
-## Suggested Lightweight Architecture
+## Lightweight Architecture
 
 ```mermaid
 flowchart LR
-  Watch["Apple Watch / Mock Sensor"] --> Sensor["Sensor Adapter"]
-  Sensor --> Store["Database Adapter"]
-  Sensor --> Avatar["Avatar Response Engine"]
-  Avatar --> VR["VR Scene"]
-  Store --> Dashboard["Web Dashboard"]
-  Avatar --> Store
-  VR --> Store
+  Watch["Apple Watch"] --> WatchOS["watchOS HealthKit App"]
+  WatchOS --> iPhone["iPhone Companion Bridge"]
+  iPhone --> API["SQLite API"]
+  API --> DB["SQLite"]
+  API --> Dashboard["React Dashboard"]
+  API --> Unity["Unity Quest 3 App"]
+  Unity --> Avatar["VR Avatar Mood"]
 ```
 
 ## Project Structure
 
 ```text
 .
-├── index.html
-├── styles.css
-├── src
-│   ├── app.js
-│   ├── avatarEngine.js
-│   ├── database.js
-│   ├── dashboard.js
-│   ├── sensorMock.js
-│   └── vrScene.js
+├── apps
+│   ├── api              # Express + SQLite local API
+│   └── web              # React + Vite dashboard
+├── database             # SQLite schema
+├── sensor
+│   └── apple-watch      # watchOS/iPhone bridge starter code
+├── unity                # Unity Quest 3 scripts and setup notes
+├── .github/workflows    # GitHub Pages deploy
+├── vercel.json          # Vercel deploy config
 └── docs
     ├── apple-watch-integration.md
     ├── database-schema.md
+    ├── deployment.md
     └── demo-script.md
 ```
 
-## Run Locally
-
-Open `index.html` in a browser.
-
-For best results with WebXR/WebVR features, serve it locally:
+## Run The React Dashboard
 
 ```bash
-npx serve .
+npm install
+npm run web:dev
 ```
 
-Then open the local URL shown in the terminal.
+Open the local Vite URL.
+
+## Run With SQLite API
+
+```bash
+npm install
+npm run api:dev
+npm run web:dev
+```
+
+The API writes to `apps/api/data/demo.sqlite` and exposes:
+
+- `POST /api/samples`
+- `GET /api/samples`
+- `GET /api/latest`
+- `GET /api/events`
+
+## Deploy
+
+- **Vercel**: import this repo and use the included `vercel.json`.
+- **GitHub Pages**: enable Pages from GitHub Actions; workflow is in `.github/workflows/pages.yml`.
+
+The hosted dashboard can run in mock mode by default. To use real Apple Watch data, deploy or run the SQLite API and set `VITE_API_BASE_URL`.
+
+## Unity + Quest 3
+
+See `unity/README.md`. The shortest path is:
+
+1. Open Unity Hub.
+2. Create a 3D URP project.
+3. Install Android Build Support and XR Plugin Management.
+4. Enable OpenXR for Android.
+5. Import scripts from `unity/Assets/Scripts`.
+6. Set `HeartRateReceiver.apiBaseUrl` to your API URL.
+7. Build and run to Quest 3.
+
+## Apple Watch Heart-rate Stream
+
+See `docs/apple-watch-integration.md` and `sensor/apple-watch/README.md`. The live path is:
+
+1. Build a watchOS app with HealthKit permission.
+2. Start a workout session on Apple Watch to receive live heart-rate samples.
+3. Send samples to the iPhone companion app through WatchConnectivity.
+4. The iPhone app posts samples to `POST /api/samples`.
 
 ## What To Demo
 
-1. Start the mock Apple Watch stream.
-2. Watch the avatar react to changing heart-rate zones.
-3. Log VR interaction events such as focus, breathing prompt, and avatar check-in.
-4. Review heart-rate samples and avatar messages in the dashboard.
-5. Export the locally stored records as JSON.
-
+1. Start the React dashboard in mock mode.
+2. Start the local SQLite API.
+3. Post mock or Apple Watch samples to the API.
+4. Watch the dashboard update.
+5. Run Unity on Quest 3 and let the avatar mood follow the latest heart-rate zone.

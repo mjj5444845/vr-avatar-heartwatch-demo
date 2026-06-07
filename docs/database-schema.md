@@ -1,6 +1,6 @@
 # Database Schema
 
-Start with `localStorage` through `src/database.js`. Replace that adapter later without changing the rest of the app.
+The demo uses SQLite through `apps/api`. The canonical schema lives in `database/schema.sql`.
 
 ## heart_rate_samples
 
@@ -11,6 +11,20 @@ Start with `localStorage` through `src/database.js`. Replace that adapter later 
 | source | string | `apple_watch_mock` or `apple_watch` |
 | heart_rate | number | BPM |
 | timestamp | datetime | ISO string |
+
+## Local Database
+
+By default the API writes to:
+
+```text
+apps/api/data/demo.sqlite
+```
+
+Override with:
+
+```bash
+SQLITE_PATH=/absolute/path/demo.sqlite npm run api:dev
+```
 
 ## avatar_messages
 
@@ -32,4 +46,3 @@ Start with `localStorage` through `src/database.js`. Replace that adapter later 
 | type | string | Interaction event name |
 | text | string | Human-readable event summary |
 | timestamp | datetime | ISO string |
-

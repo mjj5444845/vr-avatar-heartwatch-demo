@@ -1,0 +1,16 @@
+.DS_Store
+node_modules/
+dist/
+.vercel/
+apps/api/data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+Logs/
+UserSettings/
+
