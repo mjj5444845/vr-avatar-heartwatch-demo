@@ -10,7 +10,8 @@ public class QuestScriptedInputController : MonoBehaviour
 
     public Key editorStartKey = Key.X;
     public Key editorSwitchKey = Key.Y;
-    public Key editorNextKey = Key.Space;
+    public Key editorNextKey = Key.N;
+    public Key editorNextAltKey = Key.Enter;
 
     private bool wasEditorStartPressed;
     private bool wasEditorSwitchPressed;
@@ -85,7 +86,7 @@ public class QuestScriptedInputController : MonoBehaviour
 
         bool startPressed = keyboard[editorStartKey].isPressed;
         bool switchPressed = keyboard[editorSwitchKey].isPressed;
-        bool nextPressed = keyboard[editorNextKey].isPressed;
+        bool nextPressed = keyboard[editorNextKey].isPressed || keyboard[editorNextAltKey].isPressed;
 
         if (startPressed && !wasEditorStartPressed)
         {

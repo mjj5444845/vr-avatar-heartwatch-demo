@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -30,8 +31,10 @@ public static class LivingRoomSceneBuilder
 
         CreateDayFloor(root.transform);
         GameObject avatar = CreateRobotKyle(root.transform);
+        AvatarMotionController motionController = ConfigureAvatarForScriptedDialogue(avatar);
         CreateQuestRigIfMissing(root.transform);
         CreateWorldPanels(receiver, conversation);
+        conversation.motionController = motionController;
         CreateLighting();
 
         if (avatar != null)
@@ -147,20 +150,128 @@ public static class LivingRoomSceneBuilder
             avatar.transform.localScale = new Vector3(0.55f, 0.95f, 0.55f);
         }
 
-        Animator animator = avatar.GetComponentInChildren<Animator>();
-        if (animator != null)
-        {
-            RuntimeAnimatorController idleController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>("Assets/UnityTechnologies/SpaceRobotKyle/Animations/StarterAssetsThirdPerson.controller");
-            if (idleController != null)
-            {
-                animator.runtimeAnimatorController = idleController;
-            }
-        }
-
         GameObject lookAt = new GameObject("Avatar Conversation Focus");
         lookAt.transform.SetParent(avatar.transform);
         lookAt.transform.localPosition = new Vector3(0, 1.45f, 0.2f);
         return avatar;
+    }
+
+    private static AvatarMotionController ConfigureAvatarForScriptedDialogue(GameObject avatar)
+    {
+        if (avatar == null)
+        {
+            return null;
+        }
+
+        RemoveAvatarMovementComponents(avatar);
+
+        Animator animator = avatar.GetComponentInChildren<Animator>();
+        if (animator == null)
+        {
+            return null;
+        }
+
+        AnimationClip idleClip = LoadClip("Assets/UnityTechnologies/SpaceRobotKyle/Animations/Stand--Idle.anim.fbx");
+        AnimationClip saluteClip = LoadClip("Assets/AvatarMotion/Salute.fbx");
+        AnimationClip happyClip = LoadClip("Assets/AvatarMotion/Happy Idle.fbx");
+        AnimationClip defeatedClip = LoadClip("Assets/AvatarMotion/Defeated.fbx");
+        AnimatorController controller = CreateScriptedAnimatorController(idleClip, saluteClip, happyClip, defeatedClip);
+        if (controller != null)
+        {
+            animator.runtimeAnimatorController = controller;
+        }
+
+        AvatarMotionController motionController = avatar.GetComponent<AvatarMotionController>();
+        if (motionController == null)
+        {
+            motionController = avatar.AddComponent<AvatarMotionController>();
+        }
+
+        motionController.animator = animator;
+        motionController.saluteClip = saluteClip;
+        motionController.happyClip = happyClip;
+        motionController.defeatedClip = defeatedClip;
+        return motionController;
+    }
+
+    private static void RemoveAvatarMovementComponents(GameObject avatar)
+    {
+        foreach (CharacterController controller in avatar.GetComponentsInChildren<CharacterController>(true))
+        {
+            Object.DestroyImmediate(controller);
+        }
+
+        foreach (Rigidbody rigidbody in avatar.GetComponentsInChildren<Rigidbody>(true))
+        {
+            Object.DestroyImmediate(rigidbody);
+        }
+
+        foreach (MonoBehaviour behaviour in avatar.GetComponentsInChildren<MonoBehaviour>(true))
+        {
+            if (behaviour == null)
+            {
+                continue;
+            }
+
+            string typeName = behaviour.GetType().FullName;
+            if (typeName == "StarterAssets.ThirdPersonController" ||
+                typeName == "StarterAssets.StarterAssetsInputs" ||
+                typeName == "StarterAssets.BasicRigidBodyPush" ||
+                typeName == "UnityEngine.InputSystem.PlayerInput")
+            {
+                Object.DestroyImmediate(behaviour);
+            }
+        }
+    }
+
+    private static AnimatorController CreateScriptedAnimatorController(AnimationClip idleClip, AnimationClip saluteClip, AnimationClip happyClip, AnimationClip defeatedClip)
+    {
+        const string controllerPath = "Assets/AvatarMotion/ScriptedAvatarMotion.controller";
+        Directory.CreateDirectory("Assets/AvatarMotion");
+
+        AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath);
+        if (controller == null)
+        {
+            controller = AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
+        }
+
+        AnimatorStateMachine stateMachine = controller.layers[0].stateMachine;
+        foreach (ChildAnimatorState childState in stateMachine.states)
+        {
+            stateMachine.RemoveState(childState.state);
+        }
+
+        AnimatorState idleState = AddState(stateMachine, "Idle", idleClip, new Vector3(260, 80, 0));
+        AddState(stateMachine, "Salute", saluteClip, new Vector3(260, 170, 0));
+        AddState(stateMachine, "Happy", happyClip, new Vector3(260, 260, 0));
+        AddState(stateMachine, "Defeated", defeatedClip, new Vector3(260, 350, 0));
+        stateMachine.defaultState = idleState;
+
+        EditorUtility.SetDirty(controller);
+        AssetDatabase.SaveAssets();
+        return controller;
+    }
+
+    private static AnimatorState AddState(AnimatorStateMachine stateMachine, string stateName, Motion motion, Vector3 position)
+    {
+        AnimatorState state = stateMachine.AddState(stateName, position);
+        state.motion = motion;
+        state.writeDefaultValues = true;
+        return state;
+    }
+
+    private static AnimationClip LoadClip(string assetPath)
+    {
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+        foreach (Object asset in assets)
+        {
+            if (asset is AnimationClip clip && !clip.name.StartsWith("__preview"))
+            {
+                return clip;
+            }
+        }
+
+        return AssetDatabase.LoadAssetAtPath<AnimationClip>(assetPath);
     }
 
     private static void CreateQuestRigIfMissing(Transform parent)
@@ -207,7 +318,7 @@ public static class LivingRoomSceneBuilder
         panel.zoneText = heartZone;
 
         Canvas dialogueCanvas = CreatePanelCanvas("Avatar Reply Panel", new Vector3(1.2f, 1.65f, 0.3f), Quaternion.Euler(0, -20, 0), new Vector2(2.0f, 0.75f));
-        Text replyText = CreateText(dialogueCanvas.transform, "Reply Text", "Press X to start, Y to switch story, A for next.", new Vector2(0, 0), 25, TextAnchor.MiddleCenter);
+        Text replyText = CreateText(dialogueCanvas.transform, "Reply Text", "Press X to start, Y to switch, N/Enter or A for next.", new Vector2(0, 0), 25, TextAnchor.MiddleCenter);
 
         AvatarDialoguePanel dialoguePanel = dialogueCanvas.gameObject.AddComponent<AvatarDialoguePanel>();
         dialoguePanel.replyText = replyText;
