@@ -1,0 +1,78 @@
+name: HeartWatchDemo
+options:
+  bundleIdPrefix: com.jeffrey
+  deploymentTarget:
+    iOS: "16.0"
+    watchOS: "9.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: W9CMCJ9NYR
+    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "0.1"
+targets:
+  HeartWatchDemo:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: ../../sensor/apple-watch
+        includes:
+          - iPhoneHeartRateBridgeApp.swift
+          - iPhoneHeartRateBridgeView.swift
+          - iPhoneWatchConnectivityBridge.swift
+          - HeartWatchModels.swift
+          - HeartWatchAPIClient.swift
+    dependencies:
+      - target: HeartWatchDemoWatchApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jeffrey.HeartWatchDemo
+        PRODUCT_NAME: HeartWatchDemo
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: HeartWatch
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: This demo connects to the local SQLite API on the Mac.
+        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTS_MACCATALYST: NO
+  HeartWatchDemoWatchApp:
+    type: application
+    platform: watchOS
+    deploymentTarget: "9.0"
+    sources:
+      - path: ../../sensor/apple-watch
+        includes:
+          - WatchHeartRateApp.swift
+          - WatchHeartRateView.swift
+          - WatchHeartRateManager.swift
+    entitlements:
+      path: HeartWatchDemoWatchApp/HeartWatchDemoWatchApp.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jeffrey.HeartWatchDemo.watchkitapp
+        PRODUCT_NAME: HeartWatch
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: HeartWatch
+        INFOPLIST_KEY_NSHealthShareUsageDescription: This demo reads heart rate to drive a VR avatar.
+        INFOPLIST_KEY_WKApplication: YES
+        INFOPLIST_KEY_WKCompanionAppBundleIdentifier: com.jeffrey.HeartWatchDemo
+        INFOPLIST_KEY_WKBackgroundModes: workout-processing
+schemes:
+  HeartWatchDemo:
+    build:
+      targets:
+        HeartWatchDemo: all
+        HeartWatchDemoWatchApp: all
+    run:
+      config: Debug
+  HeartWatchDemoWatchApp:
+    build:
+      targets:
+        HeartWatchDemoWatchApp: all
+    run:
+      config: Debug

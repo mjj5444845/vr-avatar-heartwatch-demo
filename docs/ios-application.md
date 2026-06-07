@@ -14,20 +14,40 @@ The iPhone app does two jobs:
 - Apple Watch with Health permissions available.
 - Free or paid Apple Developer account signed into Xcode.
 
-## Xcode Project Creation
+## Xcode Project
 
-1. Open Xcode.
-2. Select **File > New > Project**.
-3. Choose **iOS > App**.
-4. Product name: `HeartWatchDemo`.
-5. Interface: **SwiftUI**.
-6. Language: **Swift**.
-7. Check **Include Watch App** if Xcode offers it, or add a watchOS app target after creating the iOS app.
-8. Save the Xcode project outside this repo or inside an ignored local folder.
+The repo includes a generated Xcode project:
 
-## Add Swift Files To Targets
+```text
+ios/HeartWatchDemo/HeartWatchDemo.xcodeproj
+```
 
-Add these files from `sensor/apple-watch` to the iPhone app target:
+Open this project directly in Xcode. It already contains:
+
+- iPhone app target: `HeartWatchDemo`
+- Apple Watch app target: `HeartWatchDemoWatchApp`
+- shared schemes for both targets
+- HealthKit entitlement for the watchOS target
+- automatic signing with Team `W9CMCJ9NYR`
+
+The source of truth for regenerating the project is:
+
+```text
+ios/HeartWatchDemo/project.yml
+```
+
+If you need to regenerate the `.xcodeproj`, install XcodeGen and run:
+
+```bash
+cd ios/HeartWatchDemo
+xcodegen generate --spec project.yml
+```
+
+If you use a different Apple Developer account later, change the Team in Xcode or update `DEVELOPMENT_TEAM` in `project.yml`.
+
+## Swift Files In Targets
+
+These files from `sensor/apple-watch` are included in the iPhone app target:
 
 ```text
 iPhoneHeartRateBridgeApp.swift
@@ -37,7 +57,7 @@ HeartWatchModels.swift
 HeartWatchAPIClient.swift
 ```
 
-Add these files from `sensor/apple-watch` to the Watch app target:
+These files from `sensor/apple-watch` are included in the Watch app target:
 
 ```text
 WatchHeartRateApp.swift
@@ -126,6 +146,20 @@ http://YOUR_MAC_IP:8787
 ```
 
 7. Tap **Save API URL**.
+
+The command-line equivalent used during setup was:
+
+```bash
+cd ios/HeartWatchDemo
+xcodebuild -project HeartWatchDemo.xcodeproj -scheme HeartWatchDemo -configuration Debug -destination 'id=YOUR_IPHONE_UDID' -derivedDataPath /tmp/HeartWatchDemoDeviceBuild -allowProvisioningUpdates build
+xcrun devicectl device install app --device YOUR_COREDEVICE_ID /tmp/HeartWatchDemoDeviceBuild/Build/Products/Debug-iphoneos/HeartWatchDemo.app
+```
+
+If launch is blocked after installation, trust the developer certificate on iPhone:
+
+```text
+Settings > General > VPN & Device Management > Developer App > Trust
+```
 
 ## Run The Watch Stream
 

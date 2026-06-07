@@ -32,6 +32,8 @@ flowchart LR
 │   ├── api              # Express + SQLite local API
 │   └── web              # Static project README site
 ├── database             # SQLite schema
+├── ios
+│   └── HeartWatchDemo   # Generated iPhone + watchOS Xcode project
 ├── sensor
 │   └── apple-watch      # watchOS/iPhone bridge starter code
 ├── unity                # Unity Quest 3 scripts and setup notes
@@ -103,7 +105,7 @@ For a Quest build, use your Mac LAN IP such as `http://192.168.1.20:8787`; do no
 
 See `docs/ios-application.md`, `docs/apple-watch-integration.md`, and `sensor/apple-watch/README.md`. The live path is:
 
-1. Build an iPhone app with a watchOS companion app.
+1. Open `ios/HeartWatchDemo/HeartWatchDemo.xcodeproj` in Xcode.
 2. Start a workout session on Apple Watch to receive live heart-rate samples.
 3. Send samples to the iPhone companion app through WatchConnectivity.
 4. The iPhone app posts samples to `POST /api/samples`.
