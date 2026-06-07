@@ -115,6 +115,36 @@ Settings > General > VPN & Device Management
 
 Then trust your Apple Developer account.
 
+## Enable Developer Mode On Apple Watch
+
+Development-signed watchOS apps also need the Apple Watch to be trusted for development. If the iPhone Watch app says:
+
+```text
+This app could not be installed at this time
+```
+
+check the watch first.
+
+On Apple Watch:
+
+1. Keep the watch unlocked and on your wrist.
+2. Open **Settings > Privacy & Security > Developer Mode**.
+3. Turn **Developer Mode** on.
+4. Restart the watch when prompted.
+5. After restart, confirm Developer Mode.
+
+If Developer Mode is not visible on the watch:
+
+1. Keep iPhone connected to the Mac.
+2. Open `ios/HeartWatchDemo/HeartWatchDemo.xcodeproj` in Xcode.
+3. Open **Window > Devices and Simulators**.
+4. Select the iPhone.
+5. Wait for the paired Apple Watch to appear under the iPhone.
+6. Try running the `HeartWatchDemoWatchApp` scheme once.
+7. Check the watch again for Developer Mode.
+
+The watch must be visible to Xcode as a paired development device. If only the iPhone appears, the Watch app may install to the iPhone but fail when transferred to Apple Watch.
+
 ## Run The SQLite API
 
 From the repo root:
@@ -163,12 +193,14 @@ Settings > General > VPN & Device Management > Developer App > Trust
 
 ## Run The Watch Stream
 
-1. In Xcode, select the Watch app scheme if it did not install automatically.
-2. Run it on your paired Apple Watch.
-3. Open the Watch app.
-4. Tap **Start**.
-5. Approve Health permission.
-6. Wait for a bpm value to appear.
+1. Enable Developer Mode on both iPhone and Apple Watch.
+2. In Xcode, select the `HeartWatchDemoWatchApp` scheme if it did not install automatically.
+3. Select the paired Apple Watch destination.
+4. Run it on your paired Apple Watch.
+5. Open the Watch app.
+6. Tap **Start**.
+7. Approve Health permission.
+8. Wait for a bpm value to appear.
 
 The Watch app starts a workout session because Apple Watch provides reliable live heart-rate updates during workouts.
 
