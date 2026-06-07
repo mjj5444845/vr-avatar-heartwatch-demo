@@ -1,14 +1,26 @@
 # Unity Quest 3 Setup
 
-This folder contains lightweight C# scripts to import into a Unity project. It is intentionally not a full Unity project because Unity generates large local folders that should not be committed.
+This folder contains a lightweight Unity project shell plus reusable C# scripts.
 
-## Create The Unity Project
+The ready-to-open project folder is:
+
+```text
+unity/VRAvatarHeartWatch
+```
+
+If Unity reports that Rosetta 2 is missing, install it first:
+
+```bash
+softwareupdate --install-rosetta --agree-to-license
+```
+
+## Open The Unity Project
 
 1. Open **Unity Hub**.
-2. Click **New project**.
-3. Choose **3D URP** or **3D Core**.
-4. Name it `VRAvatarHeartWatch`.
-5. Put it outside this repo or inside `unity/VRAvatarHeartWatch` if you prefer.
+2. Click **Add**.
+3. Select `unity/VRAvatarHeartWatch`.
+4. Open it with Unity `6000.4.10f1`.
+5. Run **VR Avatar Demo > Build Quest 3 Demo Scene**.
 
 ## Quest 3 Build Settings
 
@@ -21,20 +33,19 @@ This folder contains lightweight C# scripts to import into a Unity project. It i
 7. In **OpenXR**, enable Meta Quest support features if available.
 8. Set **Player > Other Settings > Minimum API Level** to Android 10 or newer.
 
-## Import Scripts
+## Generated Scene
 
-Copy `Assets/Scripts` from this repo into your Unity project's `Assets/Scripts` folder.
+The scene builder creates:
 
-Add these scripts to GameObjects:
+- room walls, floor, and lighting,
+- a placeholder avatar,
+- Quest 3 XR Origin, camera, and controller placeholders,
+- a current heart-rate panel,
+- an avatar reply dialogue panel,
+- a heart-rate API poller,
+- an LLM conversation bridge.
 
-- `HeartRateReceiver.cs`: attach to an empty GameObject named `HeartRateReceiver`.
-- `AvatarMoodController.cs`: attach to the avatar root or a controller object.
-
-In the Unity Inspector:
-
-- Set `HeartRateReceiver.apiBaseUrl` to your API URL, for example `http://192.168.1.20:8787`.
-- Link `AvatarMoodController` to the `HeartRateReceiver`.
-- Assign avatar renderers/materials to change color by heart-rate zone.
+Set `HeartRateReceiver.apiBaseUrl` and `LlmConversationController.apiBaseUrl` to your Mac LAN IP, for example `http://192.168.1.20:8787`.
 
 ## Run On Quest 3
 
@@ -44,4 +55,3 @@ In the Unity Inspector:
 4. In Unity, choose **Build And Run**.
 
 The Quest 3 app must reach the API over the same network. Use your Mac LAN IP, not `localhost`, when running the SQLite API on your Mac.
-

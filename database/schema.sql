@@ -22,3 +22,11 @@ CREATE TABLE IF NOT EXISTS vr_events (
   timestamp TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id TEXT PRIMARY KEY,
+  role TEXT NOT NULL,
+  text TEXT NOT NULL,
+  heart_rate INTEGER,
+  zone TEXT,
+  timestamp TEXT NOT NULL
+);

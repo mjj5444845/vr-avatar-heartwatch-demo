@@ -87,6 +87,65 @@ app.get("/api/events", (_request, response) => {
   response.json([...messages, ...vrEvents].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 120));
 });
 
+app.post("/api/chat", (request, response) => {
+  const transcript = String(request.body.text || request.body.transcript || "").trim();
+  if (!transcript) {
+    response.status(400).json({ error: "text is required" });
+    return;
+  }
+
+  const latest = db.prepare(`
+    SELECT heart_rate AS heartRate
+    FROM heart_rate_samples
+    ORDER BY timestamp DESC
+    LIMIT 1
+  `).get();
+  const zone = latest ? getZone(latest.heartRate) : { name: "unknown", tone: "neutral" };
+  const userMessage = {
+    id: crypto.randomUUID(),
+    role: "user",
+    text: transcript,
+    heartRate: latest?.heartRate || null,
+    zone: zone.name,
+    timestamp: new Date().toISOString()
+  };
+  const assistantMessage = {
+    id: crypto.randomUUID(),
+    role: "avatar",
+    text: createChatReply(transcript, latest?.heartRate, zone),
+    heartRate: latest?.heartRate || null,
+    zone: zone.name,
+    timestamp: new Date().toISOString()
+  };
+
+  const insert = db.prepare(`
+    INSERT INTO chat_messages (id, role, text, heart_rate, zone, timestamp)
+    VALUES (@id, @role, @text, @heartRate, @zone, @timestamp)
+  `);
+  db.transaction(() => {
+    insert.run(userMessage);
+    insert.run(assistantMessage);
+  })();
+
+  response.json({
+    transcript,
+    reply: assistantMessage.text,
+    heartRate: latest?.heartRate || null,
+    zone
+  });
+});
+
+app.get("/api/chat", (_request, response) => {
+  const rows = db.prepare(`
+    SELECT id, role, text, heart_rate AS heartRate, zone, timestamp
+    FROM chat_messages
+    ORDER BY timestamp DESC
+    LIMIT 80
+  `).all();
+
+  response.json(rows);
+});
+
 app.listen(port, () => {
   console.log(`SQLite API listening on http://localhost:${port}`);
 });
@@ -105,3 +164,19 @@ function normalizeSample(body) {
   };
 }
 
+function createChatReply(transcript, heartRate, zone) {
+  const state = heartRate ? `Your current heart rate is ${heartRate} bpm, in the ${zone.name} zone.` : "I do not have a heart-rate sample yet.";
+  const lower = transcript.toLowerCase();
+
+  if (lower.includes("pause") || lower.includes("stop")) {
+    return `${state} I will pause the VR interaction and stay with you while the scene settles.`;
+  }
+  if (lower.includes("breath") || lower.includes("calm")) {
+    return `${state} Let's take a slow breath together: inhale for four, hold for two, exhale for six.`;
+  }
+  if (lower.includes("how") && lower.includes("feel")) {
+    return `${state} I am reading your signal as ${zone.tone}. Tell me if you want the room quieter or more active.`;
+  }
+
+  return `${state} I heard: "${transcript}". I will adapt the avatar response to your current state.`;
+}

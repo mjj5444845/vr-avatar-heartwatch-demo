@@ -36,6 +36,15 @@ db.exec(`
     text TEXT NOT NULL,
     timestamp TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS chat_messages (
+    id TEXT PRIMARY KEY,
+    role TEXT NOT NULL,
+    text TEXT NOT NULL,
+    heart_rate INTEGER,
+    zone TEXT,
+    timestamp TEXT NOT NULL
+  );
 `);
 
 export function getZone(heartRate) {
@@ -63,4 +72,3 @@ export function createAvatarMessage(sample) {
     timestamp: sample.timestamp
   };
 }
-
