@@ -1,19 +1,19 @@
-# Apple Watch + iPhone Application
+# Apple Health + iPhone Application
 
-This folder contains Swift code for the real sensor path and the iPhone application interface.
+This folder contains Swift code for the sensor path and the iPhone application interface.
 
 ## What You Need
 
-- Apple Watch paired to your iPhone.
+- Apple Watch paired to your iPhone and syncing heart-rate records into the Health app.
 - Xcode installed on your Mac.
 - Apple Developer account signing enabled in Xcode.
 - Health permissions enabled by the user.
 
 ## How The Stream Works
 
-1. The watchOS app starts a workout session.
-2. HealthKit emits live heart-rate samples.
-3. The watch sends each sample to the iPhone app using WatchConnectivity.
+1. Apple Watch records heart-rate samples normally.
+2. The iPhone Health app receives synced samples from Apple Watch.
+3. The iPhone app reads the latest HealthKit heart-rate sample.
 4. The iPhone app posts the sample to `POST /api/samples`.
 5. The iPhone app reads the SQLite API for chart data, VR events, and conversation records.
 6. Unity Quest 3 reads the same SQLite API for the current heart-rate panel.
@@ -22,13 +22,13 @@ This folder contains Swift code for the real sensor path and the iPhone applicat
 
 ```json
 {
-  "source": "apple_watch",
+  "source": "iphone_health",
   "heartRate": 92,
   "timestamp": "2026-06-07T13:30:00.000Z"
 }
 ```
 
-## Use Your Apple Watch
+## Use Apple Health On iPhone
 
 1. Start the SQLite API on your Mac:
 
@@ -39,40 +39,31 @@ npm run api:dev
 2. Find your Mac LAN IP, for example `192.168.1.20`.
 3. In the iPhone app, set the API base URL to `http://192.168.1.20:8787`.
 4. Build the iPhone app from Xcode to your iPhone.
-5. Build the watchOS app from Xcode to your Apple Watch if it did not install automatically.
-6. Open the Watch app and tap **Start**.
-7. Accept Health permissions.
-8. Open the iPhone app and tap **Sync** to see chart data and records.
+5. Open the Health app and confirm heart-rate records exist under **Browse > Heart > Heart Rate**.
+6. Open the HeartWatch iPhone app.
+7. Tap **Allow Health Access** and approve heart-rate read permission.
+8. Tap **Read Latest Health Sample**.
+9. Tap **Sync** to see chart data and records.
 
-The watch app needs a workout session for reliable live heart-rate updates.
+No watchOS app is required in this default demo path.
 
 ## Xcode File Placement
 
-Create an iOS app with a watchOS companion app in Xcode, then add the files by target:
+The generated Xcode project is iPhone-only. Add these files to the iPhone target:
 
 ```text
-Watch target
-WatchHeartRateApp.swift
-WatchHeartRateView.swift
-WatchHeartRateManager.swift
-
-iPhone target
 iPhoneHeartRateBridgeApp.swift
 iPhoneHeartRateBridgeView.swift
-iPhoneWatchConnectivityBridge.swift
+iPhoneHealthKitHeartRateReader.swift
 HeartWatchModels.swift
 HeartWatchAPIClient.swift
 ```
 
-The Watch target owns HealthKit and sends samples to the phone. The iPhone target owns the API base URL, posts to SQLite through `POST /api/samples`, and reads `/api/latest`, `/api/samples`, `/api/events`, and `/api/chat`.
-
-Do not put both app entry files in one target, because both `WatchHeartRateApp.swift` and `iPhoneHeartRateBridgeApp.swift` contain `@main`.
+The older watchOS files remain in this folder as a fallback reference, but the generated project does not use them.
 
 ## Capabilities
 
-- Watch target: HealthKit.
-- Watch target: Workout Processing if available.
-- Watch and iPhone targets: WatchConnectivity.
+- iPhone target: HealthKit.
 
 For local HTTP testing, set the API base URL in the iPhone app to your Mac LAN IP, not `127.0.0.1`. Example:
 

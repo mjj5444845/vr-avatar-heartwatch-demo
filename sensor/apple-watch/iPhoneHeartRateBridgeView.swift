@@ -2,7 +2,7 @@ import Charts
 import SwiftUI
 
 struct iPhoneHeartRateBridgeView: View {
-    @EnvironmentObject private var bridge: iPhoneWatchConnectivityBridge
+    @EnvironmentObject private var healthReader: iPhoneHealthKitHeartRateReader
     @State private var apiURLText = UserDefaults.standard.string(forKey: "HeartRateApiBaseURL")
         ?? UserDefaults.standard.string(forKey: "HeartRateApiURL")?.replacingOccurrences(of: "/api/samples", with: "")
         ?? "http://127.0.0.1:8787"
@@ -46,15 +46,15 @@ struct iPhoneHeartRateBridgeView: View {
 
             Button("Save API URL") {
                 if let url = URL(string: apiURLText.trimmingCharacters(in: .whitespacesAndNewlines)) {
-                    bridge.apiBaseURL = url
-                    bridge.lastStatus = "API base URL saved"
+                    healthReader.apiBaseURL = url
+                    healthReader.lastStatus = "API base URL saved"
                     Task {
                         await syncDashboard()
                     }
                 }
             }
 
-            LabeledContent("Watch bridge", value: bridge.lastStatus)
+            LabeledContent("Health reader", value: healthReader.lastStatus)
             LabeledContent("Dashboard", value: isSyncing ? "Syncing" : syncStatus)
         }
     }
@@ -62,7 +62,7 @@ struct iPhoneHeartRateBridgeView: View {
     private var liveHeartRateSection: some View {
         Section("Live Heart Rate") {
             HStack(alignment: .firstTextBaseline) {
-                Text("\(dashboard.latest?.heartRate ?? bridge.lastPostedHeartRate ?? 0)")
+                Text("\(dashboard.latest?.heartRate ?? healthReader.lastPostedHeartRate ?? 0)")
                     .font(.system(size: 52, weight: .bold, design: .rounded))
                 Text("bpm")
                     .font(.headline)
@@ -70,8 +70,22 @@ struct iPhoneHeartRateBridgeView: View {
             }
 
             LabeledContent("Zone", value: dashboard.latest?.zone?.name ?? "--")
-            LabeledContent("Source", value: dashboard.latest?.source ?? "Apple Watch bridge")
-            LabeledContent("Last posted", value: bridge.lastPostedHeartRate.map { "\($0) bpm" } ?? "--")
+            LabeledContent("Source", value: dashboard.latest?.source ?? "iPhone Health")
+            LabeledContent("Last posted", value: healthReader.lastPostedHeartRate.map { "\($0) bpm" } ?? "--")
+            LabeledContent("Health sample", value: healthReader.lastSampleDate.map { $0.formatted(date: .abbreviated, time: .standard) } ?? "--")
+
+            Button("Allow Health Access") {
+                Task {
+                    await healthReader.requestAuthorization()
+                }
+            }
+
+            Button("Read Latest Health Sample") {
+                Task {
+                    await healthReader.fetchLatestAndPost()
+                    await syncDashboard()
+                }
+            }
         }
     }
 
@@ -84,7 +98,7 @@ struct iPhoneHeartRateBridgeView: View {
                         .foregroundStyle(.secondary)
                     Text("No samples yet")
                         .font(.headline)
-                    Text("Start the Watch app, then sync this screen.")
+                    Text("Allow Health access, read the latest sample, then sync this screen.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

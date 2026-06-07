@@ -7,51 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1C14D62D409F117541C343FD /* WatchHeartRateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC0A8281413F49095340AD62 /* WatchHeartRateManager.swift */; };
 		393264D042F67E113A654DF0 /* HeartWatchModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E0B6607E149023443A8A96 /* HeartWatchModels.swift */; };
-		4D31D96A323B0FE196075435 /* WatchHeartRateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EDA01E7A2E694BFDADF528F /* WatchHeartRateApp.swift */; };
 		7A2715953A014CDF8418D3B8 /* iPhoneHeartRateBridgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA48C68B662115D7EE7D2613 /* iPhoneHeartRateBridgeView.swift */; };
-		83BA0DB2FD4AD04C33E7F138 /* iPhoneWatchConnectivityBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A97A3830D436EED02992005 /* iPhoneWatchConnectivityBridge.swift */; };
-		8C1B1DA9D20DE9FAA341220C /* WatchHeartRateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A88DEC5D5D904E8A69DE5647 /* WatchHeartRateView.swift */; };
-		9A1EE9141145F25334B025A5 /* HeartWatchDemoWatchApp.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 79D1FEE07E996DAB7C5579A3 /* HeartWatchDemoWatchApp.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A4983ECF2EC6A38BF089540B /* iPhoneHeartRateBridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EED5FF21770DF71DB7DEFF6D /* iPhoneHeartRateBridgeApp.swift */; };
 		D0F44B98A3421C158D93BD8D /* HeartWatchAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5814B220C44D102B671FDBFF /* HeartWatchAPIClient.swift */; };
+		D2E38543F8C489429C6B9789 /* iPhoneHealthKitHeartRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91472B727720650A11C4324 /* iPhoneHealthKitHeartRateReader.swift */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		79ABE80E0EBC404517968345 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = B5AF76E03A2E4170B4CA5835 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 85ACDB3D4F6921B4B01BDDD1;
-			remoteInfo = HeartWatchDemoWatchApp;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		61C64ED119AF26870C4406FF /* Embed Watch Content */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
-			dstSubfolderSpec = 16;
-			files = (
-				9A1EE9141145F25334B025A5 /* HeartWatchDemoWatchApp.app in Embed Watch Content */,
-			);
-			name = "Embed Watch Content";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		5814B220C44D102B671FDBFF /* HeartWatchAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartWatchAPIClient.swift; sourceTree = "<group>"; };
-		5A97A3830D436EED02992005 /* iPhoneWatchConnectivityBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneWatchConnectivityBridge.swift; sourceTree = "<group>"; };
 		73C9702765BBD6FF5958E973 /* HeartWatchDemo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HeartWatchDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		79D1FEE07E996DAB7C5579A3 /* HeartWatchDemoWatchApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HeartWatchDemoWatchApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		8EDA01E7A2E694BFDADF528F /* WatchHeartRateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHeartRateApp.swift; sourceTree = "<group>"; };
-		A88DEC5D5D904E8A69DE5647 /* WatchHeartRateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHeartRateView.swift; sourceTree = "<group>"; };
 		BA48C68B662115D7EE7D2613 /* iPhoneHeartRateBridgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneHeartRateBridgeView.swift; sourceTree = "<group>"; };
-		DC0A8281413F49095340AD62 /* WatchHeartRateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHeartRateManager.swift; sourceTree = "<group>"; };
 		E7E0B6607E149023443A8A96 /* HeartWatchModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartWatchModels.swift; sourceTree = "<group>"; };
+		E91472B727720650A11C4324 /* iPhoneHealthKitHeartRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneHealthKitHeartRateReader.swift; sourceTree = "<group>"; };
 		EED5FF21770DF71DB7DEFF6D /* iPhoneHeartRateBridgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneHeartRateBridgeApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -61,12 +29,9 @@
 			children = (
 				5814B220C44D102B671FDBFF /* HeartWatchAPIClient.swift */,
 				E7E0B6607E149023443A8A96 /* HeartWatchModels.swift */,
+				E91472B727720650A11C4324 /* iPhoneHealthKitHeartRateReader.swift */,
 				EED5FF21770DF71DB7DEFF6D /* iPhoneHeartRateBridgeApp.swift */,
 				BA48C68B662115D7EE7D2613 /* iPhoneHeartRateBridgeView.swift */,
-				5A97A3830D436EED02992005 /* iPhoneWatchConnectivityBridge.swift */,
-				8EDA01E7A2E694BFDADF528F /* WatchHeartRateApp.swift */,
-				DC0A8281413F49095340AD62 /* WatchHeartRateManager.swift */,
-				A88DEC5D5D904E8A69DE5647 /* WatchHeartRateView.swift */,
 			);
 			name = "apple-watch";
 			path = "../../sensor/apple-watch";
@@ -84,7 +49,6 @@
 			isa = PBXGroup;
 			children = (
 				73C9702765BBD6FF5958E973 /* HeartWatchDemo.app */,
-				79D1FEE07E996DAB7C5579A3 /* HeartWatchDemoWatchApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -92,34 +56,15 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		85ACDB3D4F6921B4B01BDDD1 /* HeartWatchDemoWatchApp */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = F35D14961A3CA960C0CB09FB /* Build configuration list for PBXNativeTarget "HeartWatchDemoWatchApp" */;
-			buildPhases = (
-				3C6830465ED329EFC1AF999B /* Sources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = HeartWatchDemoWatchApp;
-			packageProductDependencies = (
-			);
-			productName = HeartWatchDemoWatchApp;
-			productReference = 79D1FEE07E996DAB7C5579A3 /* HeartWatchDemoWatchApp.app */;
-			productType = "com.apple.product-type.application";
-		};
 		C6CD735AB7684FD8D8F61BC6 /* HeartWatchDemo */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A48224C6AFD41351DF69D59B /* Build configuration list for PBXNativeTarget "HeartWatchDemo" */;
 			buildPhases = (
 				29674A456CBFF831ED9B2984 /* Sources */,
-				61C64ED119AF26870C4406FF /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				17BF17D33EB8CF564BBC5913 /* PBXTargetDependency */,
 			);
 			name = HeartWatchDemo;
 			packageProductDependencies = (
@@ -137,10 +82,6 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
-					85ACDB3D4F6921B4B01BDDD1 = {
-						DevelopmentTeam = W9CMCJ9NYR;
-						ProvisioningStyle = Automatic;
-					};
 					C6CD735AB7684FD8D8F61BC6 = {
 						DevelopmentTeam = W9CMCJ9NYR;
 						ProvisioningStyle = Automatic;
@@ -162,7 +103,6 @@
 			projectRoot = "";
 			targets = (
 				C6CD735AB7684FD8D8F61BC6 /* HeartWatchDemo */,
-				85ACDB3D4F6921B4B01BDDD1 /* HeartWatchDemoWatchApp */,
 			);
 		};
 /* End PBXProject section */
@@ -174,61 +114,25 @@
 			files = (
 				D0F44B98A3421C158D93BD8D /* HeartWatchAPIClient.swift in Sources */,
 				393264D042F67E113A654DF0 /* HeartWatchModels.swift in Sources */,
+				D2E38543F8C489429C6B9789 /* iPhoneHealthKitHeartRateReader.swift in Sources */,
 				A4983ECF2EC6A38BF089540B /* iPhoneHeartRateBridgeApp.swift in Sources */,
 				7A2715953A014CDF8418D3B8 /* iPhoneHeartRateBridgeView.swift in Sources */,
-				83BA0DB2FD4AD04C33E7F138 /* iPhoneWatchConnectivityBridge.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		3C6830465ED329EFC1AF999B /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				4D31D96A323B0FE196075435 /* WatchHeartRateApp.swift in Sources */,
-				1C14D62D409F117541C343FD /* WatchHeartRateManager.swift in Sources */,
-				8C1B1DA9D20DE9FAA341220C /* WatchHeartRateView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXTargetDependency section */
-		17BF17D33EB8CF564BBC5913 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 85ACDB3D4F6921B4B01BDDD1 /* HeartWatchDemoWatchApp */;
-			targetProxy = 79ABE80E0EBC404517968345 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
 /* Begin XCBuildConfiguration section */
-		107A22C235D85A1B7B93C5F2 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = HeartWatchDemoWatchApp/HeartWatchDemoWatchApp.entitlements;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = HeartWatch;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "This demo reads heart rate to drive a VR avatar.";
-				INFOPLIST_KEY_WKApplication = YES;
-				INFOPLIST_KEY_WKBackgroundModes = "workout-processing";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.jeffrey.HeartWatchDemo;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jeffrey.HeartWatchDemo.watchkitapp;
-				PRODUCT_NAME = HeartWatch;
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
-			};
-			name = Debug;
-		};
 		15E39A2BEB1DF671982E0806 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = HeartWatchDemo/HeartWatchDemo.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = HeartWatch;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "This demo reads Apple Health heart-rate samples synced from Apple Watch.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "This demo connects to the local SQLite API on the Mac.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -305,10 +209,10 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
 			};
 			name = Debug;
 		};
@@ -365,30 +269,10 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
-			};
-			name = Release;
-		};
-		72D1D299B4860428DE24F176 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = HeartWatchDemoWatchApp/HeartWatchDemoWatchApp.entitlements;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = HeartWatch;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "This demo reads heart rate to drive a VR avatar.";
-				INFOPLIST_KEY_WKApplication = YES;
-				INFOPLIST_KEY_WKBackgroundModes = "workout-processing";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.jeffrey.HeartWatchDemo;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jeffrey.HeartWatchDemo.watchkitapp;
-				PRODUCT_NAME = HeartWatch;
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
 			};
 			name = Release;
 		};
@@ -396,10 +280,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = HeartWatchDemo/HeartWatchDemo.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = HeartWatch;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "This demo reads Apple Health heart-rate samples synced from Apple Watch.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "This demo connects to the local SQLite API on the Mac.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -433,15 +319,6 @@
 			buildConfigurations = (
 				15E39A2BEB1DF671982E0806 /* Debug */,
 				7C3D8233952E5A49E30BC6E2 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		F35D14961A3CA960C0CB09FB /* Build configuration list for PBXNativeTarget "HeartWatchDemoWatchApp" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				107A22C235D85A1B7B93C5F2 /* Debug */,
-				72D1D299B4860428DE24F176 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

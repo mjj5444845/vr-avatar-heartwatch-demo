@@ -73,39 +73,35 @@ http://192.168.1.20:8787
 
 Tap Sync to load `/api/latest`, `/api/samples`, `/api/events`, and `/api/chat`.
 
-## Apple Watch Heart-rate Stream
+## Apple Health Heart-rate Stream
 
-Apple Watch cannot stream live heart rate directly to a normal web page. The lightweight real path is:
+The current lightweight path avoids Apple Watch app installation. Apple Watch syncs heart-rate records into the iPhone Health app, then the iPhone app reads the newest HealthKit sample:
 
 ```text
-Apple Watch HealthKit -> WatchConnectivity -> iPhone app -> SQLite API
+Apple Watch -> iPhone Health -> HeartWatch iPhone app -> SQLite API
 ```
 
 In Xcode:
 
-1. Create an iOS app with a watchOS companion app.
-2. Add these files to the Watch target:
-   - `sensor/apple-watch/WatchHeartRateApp.swift`
-   - `sensor/apple-watch/WatchHeartRateView.swift`
-   - `sensor/apple-watch/WatchHeartRateManager.swift`
-3. Add these files to the iPhone target:
+1. Open `ios/HeartWatchDemo/HeartWatchDemo.xcodeproj`.
+2. Confirm the iPhone target includes:
    - `sensor/apple-watch/iPhoneHeartRateBridgeApp.swift`
    - `sensor/apple-watch/iPhoneHeartRateBridgeView.swift`
-   - `sensor/apple-watch/iPhoneWatchConnectivityBridge.swift`
+   - `sensor/apple-watch/iPhoneHealthKitHeartRateReader.swift`
    - `sensor/apple-watch/HeartWatchModels.swift`
    - `sensor/apple-watch/HeartWatchAPIClient.swift`
-4. Enable HealthKit on the Watch target.
-5. Enable WatchConnectivity on both targets.
-6. Add `NSHealthShareUsageDescription` to the Watch target Info settings.
-7. Run the iPhone app and Watch app on your devices.
-8. In the iPhone app, set the API base URL:
+3. Enable HealthKit on the iPhone target.
+4. Add `NSHealthShareUsageDescription` to the iPhone target Info settings.
+5. Run the iPhone app on your device.
+6. In the iPhone app, set the API base URL:
 
 ```text
 http://YOUR_MAC_IP:8787
 ```
 
-9. Open the Watch app, tap Start, and accept Health permissions.
-10. Check the newest sample:
+7. Tap **Allow Health Access** and approve heart-rate read access.
+8. Tap **Read Latest Health Sample**.
+9. Check the newest sample:
 
 ```text
 http://YOUR_MAC_IP:8787/api/latest

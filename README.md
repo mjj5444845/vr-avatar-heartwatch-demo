@@ -1,12 +1,12 @@
 # VR Avatar Heart Watch Demo
 
-Lightweight repo template for a Quest 3 Unity VR avatar that reacts to Apple Watch heart-rate data, records everything in SQLite, and exposes an installable iPhone app for live charts, records, VR events, and conversation logs.
+Lightweight repo template for a Quest 3 Unity VR avatar that reacts to Apple Watch heart-rate data synced into iPhone Health, records everything in SQLite, and exposes an installable iPhone app for charts, records, VR events, and conversation logs.
 
 ## Four Parts
 
 - **VR**: Unity + Quest 3 scripts in `unity/`, built to poll the latest heart-rate zone and update avatar mood.
-- **Sensor**: Apple Watch HealthKit + WatchConnectivity app in `sensor/apple-watch/`, sending live heart-rate samples through iPhone to the API.
-- **Application**: iPhone SwiftUI app in `sensor/apple-watch/`, with Watch bridge, live heart-rate chart, heart-rate records, VR events, and conversation records.
+- **Sensor**: Apple Watch records heart-rate data normally; iPhone Health syncs it.
+- **Application**: iPhone SwiftUI app in `sensor/apple-watch/`, reading HealthKit heart-rate samples and showing charts, records, VR events, and conversation records.
 - **Database**: SQLite schema and local API in `apps/api/`.
 
 The Web page in `apps/web/` is now a static project README for Vercel/GitHub Pages, not the live dashboard.
@@ -15,8 +15,8 @@ The Web page in `apps/web/` is now a static project README for Vercel/GitHub Pag
 
 ```mermaid
 flowchart LR
-  Watch["Apple Watch"] --> WatchOS["watchOS HealthKit App"]
-  WatchOS --> iPhone["iPhone Application"]
+  Watch["Apple Watch"] --> Health["iPhone Health App"]
+  Health --> iPhone["iPhone Application"]
   iPhone --> API["SQLite API"]
   API --> DB["SQLite"]
   API --> iPhone
@@ -33,7 +33,7 @@ flowchart LR
 │   └── web              # Static project README site
 ├── database             # SQLite schema
 ├── ios
-│   └── HeartWatchDemo   # Generated iPhone + watchOS Xcode project
+│   └── HeartWatchDemo   # Generated iPhone Xcode project
 ├── sensor
 │   └── apple-watch      # watchOS/iPhone bridge starter code
 ├── unity                # Unity Quest 3 scripts and setup notes
@@ -101,26 +101,27 @@ The shortest Quest 3 path is:
 
 For a Quest build, use your Mac LAN IP such as `http://192.168.1.20:8787`; do not use `127.0.0.1`, because that points to the Quest device itself.
 
-## Apple Watch Heart-rate Stream
+## Apple Health Heart-rate Stream
 
 See `docs/ios-application.md`, `docs/apple-watch-integration.md`, and `sensor/apple-watch/README.md`. The live path is:
 
 1. Open `ios/HeartWatchDemo/HeartWatchDemo.xcodeproj` in Xcode.
-2. Start a workout session on Apple Watch to receive live heart-rate samples.
-3. Send samples to the iPhone companion app through WatchConnectivity.
-4. The iPhone app posts samples to `POST /api/samples`.
+2. Wear Apple Watch normally and let it sync heart-rate samples into iPhone Health.
+3. In the iPhone app, allow Health access and tap **Read Latest Health Sample**.
+4. The iPhone app posts the latest Health sample to `POST /api/samples`.
 5. The iPhone app reads `/api/samples`, `/api/events`, and `/api/chat` for charts and records.
 
 The included Swift files are split by target:
 
-- Watch target: `WatchHeartRateApp.swift`, `WatchHeartRateView.swift`, `WatchHeartRateManager.swift`
-- iPhone target: `iPhoneHeartRateBridgeApp.swift`, `iPhoneHeartRateBridgeView.swift`, `iPhoneWatchConnectivityBridge.swift`, `HeartWatchModels.swift`, `HeartWatchAPIClient.swift`
+- iPhone target: `iPhoneHeartRateBridgeApp.swift`, `iPhoneHeartRateBridgeView.swift`, `iPhoneHealthKitHeartRateReader.swift`, `HeartWatchModels.swift`, `HeartWatchAPIClient.swift`
+
+The older watchOS files are kept as a fallback reference but are not part of the generated Xcode project.
 
 ## What To Demo
 
 1. Start the local SQLite API.
-2. Install the iPhone + Watch app from Xcode.
-3. Start the Apple Watch heart-rate stream.
+2. Install the iPhone app from Xcode.
+3. Allow Health access and read the latest synced Apple Watch heart-rate sample.
 4. Watch the iPhone app chart and records update.
 5. Run Unity on Quest 3 and let the heart-rate panel follow the latest sample.
 6. Use X/Y/A or keyboard X/Y/N to drive scripted dialogue and store conversation rows in SQLite.

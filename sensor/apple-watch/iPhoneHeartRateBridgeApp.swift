@@ -2,15 +2,12 @@ import SwiftUI
 
 @main
 struct iPhoneHeartRateBridgeApp: App {
-    @StateObject private var bridge = iPhoneWatchConnectivityBridge.shared
+    @StateObject private var healthReader = iPhoneHealthKitHeartRateReader.shared
 
     var body: some Scene {
         WindowGroup {
             iPhoneHeartRateBridgeView()
-                .environmentObject(bridge)
-                .onAppear {
-                    bridge.start()
-                }
+                .environmentObject(healthReader)
         }
     }
 }

@@ -4,14 +4,14 @@ The project now uses the iPhone app as the live application interface. The stati
 
 The iPhone app does two jobs:
 
-- receives Apple Watch heart-rate samples through WatchConnectivity and posts them to SQLite API,
+- reads Apple Watch heart-rate samples that have synced into Apple Health and posts them to SQLite API,
 - reads the API data and displays heart-rate charts, events, and conversation records.
 
 ## Required Apple Devices
 
 - Mac with Xcode.
 - iPhone paired with Apple Watch.
-- Apple Watch with Health permissions available.
+- Apple Watch already syncing heart-rate records into the iPhone Health app.
 - Free or paid Apple Developer account signed into Xcode.
 
 ## Xcode Project
@@ -25,9 +25,7 @@ ios/HeartWatchDemo/HeartWatchDemo.xcodeproj
 Open this project directly in Xcode. It already contains:
 
 - iPhone app target: `HeartWatchDemo`
-- Apple Watch app target: `HeartWatchDemoWatchApp`
-- shared schemes for both targets
-- HealthKit entitlement for the watchOS target
+- HealthKit entitlement for the iPhone target
 - automatic signing with Team `W9CMCJ9NYR`
 
 The source of truth for regenerating the project is:
@@ -52,20 +50,12 @@ These files from `sensor/apple-watch` are included in the iPhone app target:
 ```text
 iPhoneHeartRateBridgeApp.swift
 iPhoneHeartRateBridgeView.swift
-iPhoneWatchConnectivityBridge.swift
+iPhoneHealthKitHeartRateReader.swift
 HeartWatchModels.swift
 HeartWatchAPIClient.swift
 ```
 
-These files from `sensor/apple-watch` are included in the Watch app target:
-
-```text
-WatchHeartRateApp.swift
-WatchHeartRateView.swift
-WatchHeartRateManager.swift
-```
-
-Do not add both `iPhoneHeartRateBridgeApp.swift` and `WatchHeartRateApp.swift` to the same target. Each file contains an `@main` app entry.
+The older watchOS files are kept in `sensor/apple-watch` as a fallback reference, but they are no longer included in the generated Xcode project.
 
 The iPhone target uses Swift Charts, so use iOS 16 or newer.
 
@@ -77,20 +67,12 @@ For the iPhone target:
 
 1. Set your Team.
 2. Enable **Automatically manage signing**.
-3. Add **WatchConnectivity** if it is not already present.
+3. Add **HealthKit** if it is not already present.
 
-For the Watch target:
-
-1. Set your Team.
-2. Enable **Automatically manage signing**.
-3. Add **HealthKit**.
-4. Add **WatchConnectivity**.
-5. Add **Workout Processing** if Xcode offers it for your watchOS target.
-
-In the Watch target Info settings, add:
+In the iPhone target Info settings, add:
 
 ```text
-NSHealthShareUsageDescription = This demo reads heart rate to drive a VR avatar.
+NSHealthShareUsageDescription = This demo reads Apple Health heart-rate samples synced from Apple Watch.
 ```
 
 For local HTTP testing from iPhone to your Mac, allow development cleartext traffic. In the iPhone target Info settings, add an App Transport Security exception for your Mac LAN IP, or use an HTTPS tunnel.
@@ -115,36 +97,6 @@ Settings > General > VPN & Device Management
 
 Then trust your Apple Developer account.
 
-## Enable Developer Mode On Apple Watch
-
-Development-signed watchOS apps also need the Apple Watch to be trusted for development. If the iPhone Watch app says:
-
-```text
-This app could not be installed at this time
-```
-
-check the watch first.
-
-On Apple Watch:
-
-1. Keep the watch unlocked and on your wrist.
-2. Open **Settings > Privacy & Security > Developer Mode**.
-3. Turn **Developer Mode** on.
-4. Restart the watch when prompted.
-5. After restart, confirm Developer Mode.
-
-If Developer Mode is not visible on the watch:
-
-1. Keep iPhone connected to the Mac.
-2. Open `ios/HeartWatchDemo/HeartWatchDemo.xcodeproj` in Xcode.
-3. Open **Window > Devices and Simulators**.
-4. Select the iPhone.
-5. Wait for the paired Apple Watch to appear under the iPhone.
-6. Try running the `HeartWatchDemoWatchApp` scheme once.
-7. Check the watch again for Developer Mode.
-
-The watch must be visible to Xcode as a paired development device. If only the iPhone appears, the Watch app may install to the iPhone but fail when transferred to Apple Watch.
-
 ## Run The SQLite API
 
 From the repo root:
@@ -167,7 +119,7 @@ The iPhone and Quest 3 must use the LAN IP. `127.0.0.1` only works on the Mac it
 1. In Xcode, select the iPhone scheme.
 2. Select your physical iPhone as the destination.
 3. Press Run.
-4. Keep the iPhone and Apple Watch paired and nearby.
+4. Keep the iPhone and Apple Watch paired so Health can sync recent heart-rate data.
 5. Open the installed iPhone app.
 6. Set **API base URL** to:
 
@@ -191,18 +143,19 @@ If launch is blocked after installation, trust the developer certificate on iPho
 Settings > General > VPN & Device Management > Developer App > Trust
 ```
 
-## Run The Watch Stream
+## Read Heart Rate From Apple Health
 
-1. Enable Developer Mode on both iPhone and Apple Watch.
-2. In Xcode, select the `HeartWatchDemoWatchApp` scheme if it did not install automatically.
-3. Select the paired Apple Watch destination.
-4. Run it on your paired Apple Watch.
-5. Open the Watch app.
-6. Tap **Start**.
-7. Approve Health permission.
-8. Wait for a bpm value to appear.
+This version does not install anything on Apple Watch. The watch records heart-rate samples normally, syncs them into the iPhone Health app, and the iPhone app reads the latest synced sample.
 
-The Watch app starts a workout session because Apple Watch provides reliable live heart-rate updates during workouts.
+1. Wear Apple Watch normally.
+2. Open the iPhone **Health** app and confirm heart-rate data exists under **Browse > Heart > Heart Rate**.
+3. Open the `HeartWatch` iPhone app.
+4. Tap **Allow Health Access**.
+5. Enable heart-rate read permission in the Health permission sheet.
+6. Tap **Read Latest Health Sample**.
+7. Tap **Sync** to refresh the chart and records from SQLite.
+
+This path is not as live as a watchOS workout app. It is the lightest reliable demo path because it avoids Apple Watch developer deployment entirely.
 
 ## Connect Unity Quest 3
 
@@ -224,8 +177,8 @@ Build and run to Quest 3 after installing Android Build Support, Android SDK/NDK
 ## Test The Full Demo
 
 1. On Mac, open `http://YOUR_MAC_IP:8787/api/health`.
-2. On Apple Watch, tap Start and wait for heart rate.
-3. On iPhone, check **Watch bridge** status. It should say `Posted to API`.
+2. On iPhone, tap **Allow Health Access**.
+3. Tap **Read Latest Health Sample**. The status should say `Posted ... bpm to API`.
 4. On iPhone, tap **Sync**. The chart and records should update.
 5. In Unity/Quest 3, confirm the heart-rate panel updates.
 6. Press Quest left `X` to start dialogue, left `Y` to switch scripts, and right `A` for next.
