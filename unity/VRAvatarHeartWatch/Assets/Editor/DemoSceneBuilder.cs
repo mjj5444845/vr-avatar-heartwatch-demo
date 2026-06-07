@@ -27,7 +27,10 @@ public static class DemoSceneBuilder
 
         Directory.CreateDirectory("Assets/Scenes");
         EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), "Assets/Scenes/Quest3AvatarRoom.unity");
-        EditorUtility.DisplayDialog("VR Avatar Demo", "Quest3AvatarRoom.unity has been generated.", "OK");
+        if (!Application.isBatchMode)
+        {
+            EditorUtility.DisplayDialog("VR Avatar Demo", "Quest3AvatarRoom.unity has been generated.", "OK");
+        }
     }
 
     private static HeartRateReceiver CreateReceiver(Transform parent)
