@@ -171,6 +171,10 @@ public static class LivingRoomSceneBuilder
             return null;
         }
 
+        ConfigureMotionImporter("Assets/AvatarMotion/Salute.fbx");
+        ConfigureMotionImporter("Assets/AvatarMotion/Happy Idle.fbx");
+        ConfigureMotionImporter("Assets/AvatarMotion/Defeated.fbx");
+
         AnimationClip idleClip = LoadClip("Assets/UnityTechnologies/SpaceRobotKyle/Animations/Stand--Idle.anim.fbx");
         AnimationClip saluteClip = LoadClip("Assets/AvatarMotion/Salute.fbx");
         AnimationClip happyClip = LoadClip("Assets/AvatarMotion/Happy Idle.fbx");
@@ -262,6 +266,15 @@ public static class LivingRoomSceneBuilder
 
     private static AnimationClip LoadClip(string assetPath)
     {
+        Object[] representations = AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath);
+        foreach (Object asset in representations)
+        {
+            if (asset is AnimationClip clip && !clip.name.StartsWith("__preview"))
+            {
+                return clip;
+            }
+        }
+
         Object[] assets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
         foreach (Object asset in assets)
         {
@@ -272,6 +285,45 @@ public static class LivingRoomSceneBuilder
         }
 
         return AssetDatabase.LoadAssetAtPath<AnimationClip>(assetPath);
+    }
+
+    private static void ConfigureMotionImporter(string assetPath)
+    {
+        ModelImporter importer = AssetImporter.GetAtPath(assetPath) as ModelImporter;
+        if (importer == null)
+        {
+            return;
+        }
+
+        bool changed = false;
+        if (importer.animationType != ModelImporterAnimationType.Human)
+        {
+            importer.animationType = ModelImporterAnimationType.Human;
+            changed = true;
+        }
+
+        if (importer.avatarSetup != ModelImporterAvatarSetup.CreateFromThisModel)
+        {
+            importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+            changed = true;
+        }
+
+        if (importer.sourceAvatar != null)
+        {
+            importer.sourceAvatar = null;
+            changed = true;
+        }
+
+        if (importer.importAnimation == false)
+        {
+            importer.importAnimation = true;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            importer.SaveAndReimport();
+        }
     }
 
     private static void CreateQuestRigIfMissing(Transform parent)

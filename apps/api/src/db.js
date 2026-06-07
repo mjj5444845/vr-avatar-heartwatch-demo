@@ -41,7 +41,7 @@ db.exec(`
     id TEXT PRIMARY KEY,
     role TEXT NOT NULL,
     text TEXT NOT NULL,
-    message_type TEXT NOT NULL DEFAULT 'spoken_text',
+    message_type TEXT NOT NULL DEFAULT 'user_speech',
     conversation_initiator TEXT NOT NULL DEFAULT 'user',
     heart_rate INTEGER,
     zone TEXT,
@@ -49,7 +49,7 @@ db.exec(`
   );
 `);
 
-ensureColumn("chat_messages", "message_type", "TEXT NOT NULL DEFAULT 'spoken_text'");
+ensureColumn("chat_messages", "message_type", "TEXT NOT NULL DEFAULT 'user_speech'");
 ensureColumn("chat_messages", "conversation_initiator", "TEXT NOT NULL DEFAULT 'user'");
 
 function ensureColumn(tableName, columnName, definition) {

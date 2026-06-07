@@ -36,7 +36,50 @@ npm run api:dev
 3. Set the iPhone bridge API URL to `http://YOUR_MAC_IP:8787/api/samples`.
 4. Build and run the iPhone + watchOS app from Xcode.
 5. Open the Watch app, tap start, and approve Health permission.
-6. Open the React dashboard and sync from the API.
+6. Open the React dashboard. It polls the API automatically when `VITE_API_BASE_URL` is set.
+7. In Unity, set `HeartRateReceiver.apiBaseUrl` to `http://YOUR_MAC_IP:8787` and play or build the scene.
+
+## Xcode Target Setup
+
+Create an iOS app with a watchOS companion app, then add these files to the correct targets:
+
+```text
+Watch target
+sensor/apple-watch/WatchHeartRateApp.swift
+sensor/apple-watch/WatchHeartRateView.swift
+sensor/apple-watch/WatchHeartRateManager.swift
+
+iPhone target
+sensor/apple-watch/iPhoneHeartRateBridgeApp.swift
+sensor/apple-watch/iPhoneHeartRateBridgeView.swift
+sensor/apple-watch/iPhoneWatchConnectivityBridge.swift
+```
+
+Do not compile both `@main` app files in the same target.
+
+Enable these capabilities:
+
+- Watch target: HealthKit.
+- Watch target: Workout Processing if Xcode offers it for the selected watchOS version.
+- Watch target and iPhone target: WatchConnectivity.
+
+Add a Health usage string to the Watch target Info settings, for example:
+
+```text
+NSHealthShareUsageDescription = This demo reads heart rate to drive the VR avatar.
+```
+
+If your iPhone posts to `http://YOUR_MAC_IP:8787`, allow local networking and cleartext HTTP for development in the iPhone target. For a public demo, prefer HTTPS through a tunnel or hosted API.
+
+## Confirm The Full Stream
+
+1. Start `npm run api:dev`.
+2. Set the iPhone app API URL to `http://YOUR_MAC_IP:8787/api/samples`.
+3. Tap Start on the Watch app.
+4. Check `http://YOUR_MAC_IP:8787/api/latest`; it should return the newest sample.
+5. Open the Unity scene; the heart-rate panel reads `/api/latest`.
+6. Open the Web Dashboard with `VITE_API_BASE_URL=http://YOUR_MAC_IP:8787`; the table and chart poll `/api/samples`.
+7. Advance scripted VR dialogue; `/api/chat/records` stores message type and initiator for Web display.
 
 ## Privacy Notes
 

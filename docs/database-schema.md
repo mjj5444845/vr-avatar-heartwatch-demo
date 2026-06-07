@@ -46,3 +46,18 @@ SQLITE_PATH=/absolute/path/demo.sqlite npm run api:dev
 | type | string | Interaction event name |
 | text | string | Human-readable event summary |
 | timestamp | datetime | ISO string |
+
+## chat_messages
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | string | UUID |
+| role | string | `user`, `avatar`, or `system` |
+| text | string | Dialogue text shown in VR and Web |
+| message_type | string | `user_speech`, `avatar_reply`, `sensor_prompt`, or `system` |
+| conversation_initiator | string | `user` or `avatar` |
+| heart_rate | number | BPM at the moment of the record, when available |
+| zone | string | calm, active, elevated, high, or unknown |
+| timestamp | datetime | ISO string |
+
+The Unity scripted dialogue writes to `/api/chat/records`; Apple Watch samples write to `/api/samples`.

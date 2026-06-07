@@ -44,3 +44,36 @@ npm run api:dev
 
 The watch app needs a workout session for reliable live heart-rate updates.
 
+## Xcode File Placement
+
+Create an iOS app with a watchOS companion app in Xcode, then add the files by target:
+
+```text
+Watch target
+WatchHeartRateApp.swift
+WatchHeartRateView.swift
+WatchHeartRateManager.swift
+
+iPhone target
+iPhoneHeartRateBridgeApp.swift
+iPhoneHeartRateBridgeView.swift
+iPhoneWatchConnectivityBridge.swift
+```
+
+The Watch target owns HealthKit and sends samples to the phone. The iPhone target owns the API URL and posts to SQLite through `POST /api/samples`.
+
+Do not put both app entry files in one target, because both `WatchHeartRateApp.swift` and `iPhoneHeartRateBridgeApp.swift` contain `@main`.
+
+## Capabilities
+
+- Watch target: HealthKit.
+- Watch target: Workout Processing if available.
+- Watch and iPhone targets: WatchConnectivity.
+
+For local HTTP testing, set the API URL in the iPhone app to your Mac LAN IP, not `127.0.0.1`. Example:
+
+```text
+http://192.168.1.20:8787/api/samples
+```
+
+Use HTTPS for a hosted or public demo.

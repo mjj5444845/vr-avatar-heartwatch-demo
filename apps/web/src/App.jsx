@@ -20,6 +20,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!API_BASE_URL) return undefined;
+
+    const timer = window.setInterval(loadData, 2500);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     if (!streaming) return undefined;
 
     const push = async () => {

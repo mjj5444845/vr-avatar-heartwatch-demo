@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   id TEXT PRIMARY KEY,
   role TEXT NOT NULL,
   text TEXT NOT NULL,
+  message_type TEXT NOT NULL DEFAULT 'user_speech',
+  conversation_initiator TEXT NOT NULL DEFAULT 'user',
   heart_rate INTEGER,
   zone TEXT,
   timestamp TEXT NOT NULL

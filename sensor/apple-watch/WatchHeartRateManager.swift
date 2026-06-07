@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import HealthKit
 import WatchConnectivity
 
@@ -6,8 +7,19 @@ final class WatchHeartRateManager: NSObject, ObservableObject, HKWorkoutSessionD
     private let healthStore = HKHealthStore()
     private var session: HKWorkoutSession?
     private var builder: HKLiveWorkoutBuilder?
+    private let isoFormatter = ISO8601DateFormatter()
 
     @Published var latestHeartRate: Double?
+    @Published var isRunning = false
+    @Published var status = "Ready"
+
+    override init() {
+        super.init()
+        if WCSession.isSupported() {
+            WCSession.default.delegate = self
+            WCSession.default.activate()
+        }
+    }
 
     func requestAuthorization() {
         guard HKHealthStore.isHealthDataAvailable(),
@@ -16,10 +28,13 @@ final class WatchHeartRateManager: NSObject, ObservableObject, HKWorkoutSessionD
         }
 
         healthStore.requestAuthorization(toShare: [], read: [heartRateType]) { success, error in
-            if let error {
-                print("HealthKit authorization error: \(error)")
+            DispatchQueue.main.async {
+                if let error {
+                    self.status = "Health permission error: \(error.localizedDescription)"
+                } else {
+                    self.status = success ? "Health permission granted" : "Health permission denied"
+                }
             }
-            print("HealthKit authorization success: \(success)")
         }
     }
 
@@ -38,18 +53,25 @@ final class WatchHeartRateManager: NSObject, ObservableObject, HKWorkoutSessionD
             let startDate = Date()
             session?.startActivity(with: startDate)
             builder?.beginCollection(withStart: startDate) { success, error in
-                if let error {
-                    print("Workout collection error: \(error)")
+                DispatchQueue.main.async {
+                    if let error {
+                        self.status = "Workout error: \(error.localizedDescription)"
+                    } else {
+                        self.isRunning = success
+                        self.status = success ? "Streaming heart rate" : "Workout did not start"
+                    }
                 }
-                print("Workout collection started: \(success)")
             }
         } catch {
-            print("Failed to start workout: \(error)")
+            status = "Failed to start: \(error.localizedDescription)"
         }
     }
 
     func stopWorkout() {
         session?.end()
+        builder?.endCollection(withEnd: Date()) { _, _ in }
+        isRunning = false
+        status = "Stopped"
     }
 
     func workoutBuilder(_ workoutBuilder: HKLiveWorkoutBuilder, didCollectDataOf collectedTypes: Set<HKSampleType>) {
@@ -79,17 +101,29 @@ final class WatchHeartRateManager: NSObject, ObservableObject, HKWorkoutSessionD
     }
 
     private func sendToPhone(heartRate: Double) {
-        guard WCSession.default.isReachable else {
-            return
-        }
-
-        WCSession.default.sendMessage([
+        let payload: [String: Any] = [
             "source": "apple_watch",
             "heartRate": Int(heartRate.rounded()),
-            "timestamp": ISO8601DateFormatter().string(from: Date())
-        ], replyHandler: nil) { error in
-            print("WatchConnectivity send error: \(error)")
+            "timestamp": isoFormatter.string(from: Date())
+        ]
+
+        if WCSession.default.isReachable {
+            WCSession.default.sendMessage(payload, replyHandler: nil) { error in
+                WCSession.default.transferUserInfo(payload)
+                print("WatchConnectivity send error: \(error)")
+            }
+        } else {
+            WCSession.default.transferUserInfo(payload)
         }
     }
 }
 
+extension WatchHeartRateManager: WCSessionDelegate {
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        DispatchQueue.main.async {
+            if let error {
+                self.status = "Watch session error: \(error.localizedDescription)"
+            }
+        }
+    }
+}
