@@ -47,6 +47,20 @@ The scene builder creates:
 
 Set `HeartRateReceiver.apiBaseUrl` and `LlmConversationController.apiBaseUrl` to your Mac LAN IP, for example `http://192.168.1.20:8787`.
 
+## Assets And Meta SDK
+
+I cannot directly import your paid or subscription assets without your Unity account authorization. Use:
+
+```text
+Window > Package Manager > My Assets
+```
+
+Full steps are in:
+
+```text
+docs/unity-assets-and-meta-sdk.md
+```
+
 ## Run On Quest 3
 
 1. Enable Developer Mode for Quest 3 in the Meta mobile app.

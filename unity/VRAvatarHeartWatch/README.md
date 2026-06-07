@@ -51,7 +51,14 @@ The package manifest includes:
 - XR Interaction Toolkit,
 - XR Management,
 - OpenXR,
+- Unity OpenXR Meta,
 - Input System.
+
+Run this project menu item after Unity finishes importing packages:
+
+```text
+VR Avatar Demo > Quest 3 Setup Checklist
+```
 
 After packages resolve, enable Android OpenXR in:
 
@@ -60,6 +67,12 @@ Edit > Project Settings > XR Plug-in Management
 ```
 
 For full Meta controller/hand support, import Meta XR SDK / Meta XR All-in-One SDK from Unity Package Manager or the Meta developer download, then replace or extend the generated controller placeholders with Meta's rig/prefabs.
+
+For account-owned assets and Meta SDK import steps, see:
+
+```text
+../../docs/unity-assets-and-meta-sdk.md
+```
 
 ## Voice + LLM
 
