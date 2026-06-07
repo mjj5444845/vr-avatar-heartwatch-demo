@@ -1,0 +1,114 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class QuestScriptedInputController : MonoBehaviour
+{
+    public ScriptedConversationController conversationController;
+    public InputActionProperty leftXButton;
+    public InputActionProperty leftYButton;
+    public InputActionProperty rightAButton;
+
+    public Key editorStartKey = Key.X;
+    public Key editorSwitchKey = Key.Y;
+    public Key editorNextKey = Key.Space;
+
+    private bool wasEditorStartPressed;
+    private bool wasEditorSwitchPressed;
+    private bool wasEditorNextPressed;
+
+    private void Reset()
+    {
+        leftXButton = CreateButtonAction("Quest Left X", "<XRController>{LeftHand}/primaryButton");
+        leftYButton = CreateButtonAction("Quest Left Y", "<XRController>{LeftHand}/secondaryButton");
+        rightAButton = CreateButtonAction("Quest Right A", "<XRController>{RightHand}/primaryButton");
+    }
+
+    private void Awake()
+    {
+        if (leftXButton.action == null)
+        {
+            leftXButton = CreateButtonAction("Quest Left X", "<XRController>{LeftHand}/primaryButton");
+        }
+
+        if (leftYButton.action == null)
+        {
+            leftYButton = CreateButtonAction("Quest Left Y", "<XRController>{LeftHand}/secondaryButton");
+        }
+
+        if (rightAButton.action == null)
+        {
+            rightAButton = CreateButtonAction("Quest Right A", "<XRController>{RightHand}/primaryButton");
+        }
+    }
+
+    private void OnEnable()
+    {
+        leftXButton.action?.Enable();
+        leftYButton.action?.Enable();
+        rightAButton.action?.Enable();
+    }
+
+    private void OnDisable()
+    {
+        leftXButton.action?.Disable();
+        leftYButton.action?.Disable();
+        rightAButton.action?.Disable();
+    }
+
+    private void Update()
+    {
+        if (leftXButton.action != null && leftXButton.action.WasPressedThisFrame())
+        {
+            conversationController?.StartCurrentScenario();
+        }
+
+        if (leftYButton.action != null && leftYButton.action.WasPressedThisFrame())
+        {
+            conversationController?.SelectNextScenario();
+        }
+
+        if (rightAButton.action != null && rightAButton.action.WasPressedThisFrame())
+        {
+            conversationController?.NextLine();
+        }
+
+        HandleEditorFallbackKeys();
+    }
+
+    private void HandleEditorFallbackKeys()
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null)
+        {
+            return;
+        }
+
+        bool startPressed = keyboard[editorStartKey].isPressed;
+        bool switchPressed = keyboard[editorSwitchKey].isPressed;
+        bool nextPressed = keyboard[editorNextKey].isPressed;
+
+        if (startPressed && !wasEditorStartPressed)
+        {
+            conversationController?.StartCurrentScenario();
+        }
+
+        if (switchPressed && !wasEditorSwitchPressed)
+        {
+            conversationController?.SelectNextScenario();
+        }
+
+        if (nextPressed && !wasEditorNextPressed)
+        {
+            conversationController?.NextLine();
+        }
+
+        wasEditorStartPressed = startPressed;
+        wasEditorSwitchPressed = switchPressed;
+        wasEditorNextPressed = nextPressed;
+    }
+
+    private static InputActionProperty CreateButtonAction(string name, string path)
+    {
+        return new InputActionProperty(new InputAction(name, InputActionType.Button, path));
+    }
+}

@@ -30,16 +30,16 @@ The scene is intentionally minimal. It includes:
 
 The Quest view starts in front of Robot Kyle, facing the avatar. If no Meta camera rig exists in the scene, the builder adds `OVRCameraRig`. Existing Meta Building Blocks are preserved.
 
-## Voice Flow
+## Scripted Dialogue Flow
 
-- Press the Quest 3 right-hand `A` button to start listening.
-- The scene uses Meta's `[BuildingBlock] Speech To Text` agent when it exists.
-- The transcript is sent to the local API at `http://127.0.0.1:8787/api/chat`.
-- Robot Kyle's reply is shown on the avatar reply panel.
-- If `[BuildingBlock] Text To Speech` exists, the same reply is spoken aloud.
-- In the Unity Editor, press Space as a fallback test trigger.
+- Press the Quest 3 left-hand `X` button to start the selected scripted scene.
+- Press the Quest 3 left-hand `Y` button to switch between the three prepared dialogue scenes.
+- Press the Quest 3 right-hand `A` button to advance to the next line.
+- In the Unity Editor, use `X`, `Y`, and Space as fallback test keys.
 
-When the user has not spoken for 10 seconds, `LlmConversationController` reads the latest heart-rate sample from `HeartRateReceiver` and asks the avatar to start a short check-in topic.
+This version does not call AI, speech-to-text, or text-to-speech. `ScriptedConversationController` displays prepared user/avatar lines and writes each line to the API through `/api/chat/records`.
+
+When the user has not advanced the dialogue for 10 seconds, `ScriptedConversationController` reads the latest heart-rate sample from `HeartRateReceiver` and picks a prepared avatar-initiated prompt. Each heart-rate zone has at least five possible pseudo replies.
 
 Conversation records are stored by the API with:
 
@@ -52,16 +52,8 @@ The Web Dashboard reads these rows from `/api/chat`.
 
 ## Meta Building Blocks
 
-The scene preserves Meta Building Blocks that you add through Meta's Building Blocks window, especially:
+The scene preserves Meta Building Blocks that you add through Meta's Building Blocks window, but the scripted flow does not depend on AI blocks.
 
 ```text
-[BuildingBlock] Speech To Text
-[BuildingBlock] Text To Speech
+Any existing [BuildingBlock] objects
 ```
-
-Two provider profiles live in `Assets/MetaXR`:
-
-- `SpeechToText_OpenAI_ProviderProfile.asset` uses `gpt-4o-mini-transcribe`.
-- `TextToSpeech_OpenAI_ProviderProfile.asset` uses `gpt-4o-mini-tts`.
-
-Do not commit an API key. Set credentials locally through Meta's provider UI or Unity's credential storage.

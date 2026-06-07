@@ -1,5 +1,4 @@
 using System.IO;
-using Meta.XR.BuildingBlocks.AIBlocks;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -27,15 +26,13 @@ public static class LivingRoomSceneBuilder
 
         GameObject root = new GameObject(RootName);
         HeartRateReceiver receiver = CreateReceiver(root.transform);
-        LlmConversationController conversation = CreateConversation(root.transform, receiver);
-        QuestVoiceInputController voice = conversation.GetComponent<QuestVoiceInputController>();
+        ScriptedConversationController conversation = CreateConversation(root.transform, receiver);
 
         CreateDayFloor(root.transform);
         GameObject avatar = CreateRobotKyle(root.transform);
         CreateQuestRigIfMissing(root.transform);
         CreateWorldPanels(receiver, conversation);
         CreateLighting();
-        WireMetaBuildingBlocks(conversation, voice);
 
         if (avatar != null)
         {
@@ -57,11 +54,25 @@ public static class LivingRoomSceneBuilder
     {
         foreach (Transform transform in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
-            if (transform.name.StartsWith("[BuildingBlock]"))
+            if (!transform.name.StartsWith("[BuildingBlock]"))
+            {
+                continue;
+            }
+
+            if (IsAiBuildingBlock(transform.name))
+            {
+                Object.DestroyImmediate(transform.gameObject);
+            }
+            else
             {
                 transform.SetParent(null, true);
             }
         }
+    }
+
+    private static bool IsAiBuildingBlock(string objectName)
+    {
+        return objectName.Contains("Speech To Text") || objectName.Contains("Text To Speech");
     }
 
     private static void RemoveGeneratedDemoObjects()
@@ -74,7 +85,9 @@ public static class LivingRoomSceneBuilder
             "Avatar Reply Panel",
             "Day Sun",
             "Day Fill Light",
-            "Meta Building Blocks Anchor"
+            "Meta Building Blocks Anchor",
+            "[BuildingBlock] Speech To Text",
+            "[BuildingBlock] Text To Speech"
         };
 
         foreach (string name in names)
@@ -96,17 +109,17 @@ public static class LivingRoomSceneBuilder
         return receiver;
     }
 
-    private static LlmConversationController CreateConversation(Transform parent, HeartRateReceiver receiver)
+    private static ScriptedConversationController CreateConversation(Transform parent, HeartRateReceiver receiver)
     {
-        GameObject conversationObject = new GameObject("LLMConversationController");
+        GameObject conversationObject = new GameObject("ScriptedConversationController");
         conversationObject.transform.SetParent(parent);
 
-        LlmConversationController conversation = conversationObject.AddComponent<LlmConversationController>();
+        ScriptedConversationController conversation = conversationObject.AddComponent<ScriptedConversationController>();
         conversation.apiBaseUrl = "http://127.0.0.1:8787";
         conversation.heartRateReceiver = receiver;
         conversation.proactiveTopicIntervalSeconds = 10f;
 
-        QuestVoiceInputController voice = conversationObject.AddComponent<QuestVoiceInputController>();
+        QuestScriptedInputController voice = conversationObject.AddComponent<QuestScriptedInputController>();
         voice.conversationController = conversation;
         return conversation;
     }
@@ -182,7 +195,7 @@ public static class LivingRoomSceneBuilder
         camera.AddComponent<AudioListener>();
     }
 
-    private static void CreateWorldPanels(HeartRateReceiver receiver, LlmConversationController conversation)
+    private static void CreateWorldPanels(HeartRateReceiver receiver, ScriptedConversationController conversation)
     {
         Canvas heartCanvas = CreatePanelCanvas("Heart Rate Panel", new Vector3(-1.35f, 1.35f, 0.35f), Quaternion.Euler(0, 20, 0), new Vector2(1.25f, 0.55f));
         Text heartValue = CreateText(heartCanvas.transform, "Heart Rate Value", "-- bpm", new Vector2(0, 36), 42, TextAnchor.MiddleCenter);
@@ -194,7 +207,7 @@ public static class LivingRoomSceneBuilder
         panel.zoneText = heartZone;
 
         Canvas dialogueCanvas = CreatePanelCanvas("Avatar Reply Panel", new Vector3(1.2f, 1.65f, 0.3f), Quaternion.Euler(0, -20, 0), new Vector2(2.0f, 0.75f));
-        Text replyText = CreateText(dialogueCanvas.transform, "Reply Text", "Press A and talk. I will reply here.", new Vector2(0, 0), 25, TextAnchor.MiddleCenter);
+        Text replyText = CreateText(dialogueCanvas.transform, "Reply Text", "Press X to start, Y to switch story, A for next.", new Vector2(0, 0), 25, TextAnchor.MiddleCenter);
 
         AvatarDialoguePanel dialoguePanel = dialogueCanvas.gameObject.AddComponent<AvatarDialoguePanel>();
         dialoguePanel.replyText = replyText;
@@ -262,44 +275,6 @@ public static class LivingRoomSceneBuilder
         RenderSettings.ambientSkyColor = new Color(0.72f, 0.82f, 1.0f);
         RenderSettings.ambientEquatorColor = new Color(0.83f, 0.86f, 0.83f);
         RenderSettings.ambientGroundColor = new Color(0.62f, 0.58f, 0.52f);
-    }
-
-    private static void WireMetaBuildingBlocks(LlmConversationController conversation, QuestVoiceInputController voice)
-    {
-        SpeechToTextAgent stt = Object.FindAnyObjectByType<SpeechToTextAgent>();
-        TextToSpeechAgent tts = Object.FindAnyObjectByType<TextToSpeechAgent>();
-        AIProviderBase sttProvider = AssetDatabase.LoadAssetAtPath<AIProviderBase>("Assets/MetaXR/SpeechToText_OpenAI_ProviderProfile.asset");
-        AIProviderBase ttsProvider = AssetDatabase.LoadAssetAtPath<AIProviderBase>("Assets/MetaXR/TextToSpeech_OpenAI_ProviderProfile.asset");
-
-        AssignProvider(stt, sttProvider);
-        AssignProvider(tts, ttsProvider);
-
-        if (voice != null)
-        {
-            voice.speechToTextAgent = stt;
-        }
-
-        if (conversation != null)
-        {
-            conversation.textToSpeechAgent = tts;
-        }
-    }
-
-    private static void AssignProvider(Object agent, AIProviderBase provider)
-    {
-        if (agent == null || provider == null)
-        {
-            return;
-        }
-
-        SerializedObject serializedObject = new SerializedObject(agent);
-        SerializedProperty providerProperty = serializedObject.FindProperty("providerAsset");
-        if (providerProperty != null)
-        {
-            providerProperty.objectReferenceValue = provider;
-            serializedObject.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(agent);
-        }
     }
 
     private static GameObject Place(string path, string name, Vector3 position, Quaternion rotation, Vector3 scale, Transform parent)

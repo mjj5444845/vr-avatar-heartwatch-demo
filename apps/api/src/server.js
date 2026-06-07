@@ -143,6 +143,42 @@ app.post("/api/chat", (request, response) => {
   });
 });
 
+app.post("/api/chat/records", (request, response) => {
+  const text = String(request.body.text || "").trim();
+  if (!text) {
+    response.status(400).json({ error: "text is required" });
+    return;
+  }
+
+  const explicitHeartRate = Number(request.body.heartRate || request.body.heart_rate);
+  const latest = Number.isFinite(explicitHeartRate) && explicitHeartRate > 0
+    ? { heartRate: Math.round(explicitHeartRate) }
+    : db.prepare(`
+      SELECT heart_rate AS heartRate
+      FROM heart_rate_samples
+      ORDER BY timestamp DESC
+      LIMIT 1
+    `).get();
+  const zone = latest ? getZone(latest.heartRate) : { name: request.body.zone || "unknown", tone: "neutral" };
+  const record = {
+    id: request.body.id || crypto.randomUUID(),
+    role: normalizeRole(request.body.role),
+    text,
+    messageType: normalizeMessageType(request.body.messageType || request.body.message_type),
+    conversationInitiator: normalizeConversationInitiator(request.body.conversationInitiator || request.body.conversation_initiator),
+    heartRate: latest?.heartRate || null,
+    zone: request.body.zone || zone.name,
+    timestamp: request.body.timestamp || new Date().toISOString()
+  };
+
+  db.prepare(`
+    INSERT INTO chat_messages (id, role, text, message_type, conversation_initiator, heart_rate, zone, timestamp)
+    VALUES (@id, @role, @text, @messageType, @conversationInitiator, @heartRate, @zone, @timestamp)
+  `).run(record);
+
+  response.status(201).json(record);
+});
+
 app.get("/api/chat", (_request, response) => {
   const rows = db.prepare(`
     SELECT
@@ -200,6 +236,11 @@ function createChatReply(transcript, heartRate, zone) {
 function normalizeMessageType(value) {
   const allowed = new Set(["user_speech", "avatar_reply", "sensor_prompt", "system"]);
   return allowed.has(value) ? value : "user_speech";
+}
+
+function normalizeRole(value) {
+  const allowed = new Set(["user", "avatar", "system"]);
+  return allowed.has(value) ? value : "avatar";
 }
 
 function normalizeConversationInitiator(value) {
