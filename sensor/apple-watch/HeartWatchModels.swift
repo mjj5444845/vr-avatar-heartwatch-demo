@@ -44,4 +44,13 @@ struct HeartWatchDashboardData {
     var samples: [HeartRateSampleRecord] = []
     var events: [AvatarEventRecord] = []
     var chatMessages: [ChatMessageRecord] = []
+    var databaseSummary: DatabaseSummaryRecord?
+}
+
+struct DatabaseSummaryRecord: Codable {
+    let ok: Bool
+    let samples: Int
+    let events: Int
+    let chat: Int
+    let latest: LatestHeartRateRecord?
 }

@@ -5,16 +5,18 @@ struct iPhoneHeartRateBridgeView: View {
     @EnvironmentObject private var healthReader: iPhoneHealthKitHeartRateReader
     @State private var apiURLText = UserDefaults.standard.string(forKey: "HeartRateApiBaseURL")
         ?? UserDefaults.standard.string(forKey: "HeartRateApiURL")?.replacingOccurrences(of: "/api/samples", with: "")
-        ?? "http://127.0.0.1:8787"
+        ?? "http://192.168.1.174:8787"
     @State private var dashboard = HeartWatchDashboardData()
     @State private var syncStatus = "Waiting to sync"
     @State private var isSyncing = false
+    @State private var apiStatus = "Not checked"
 
     var body: some View {
         NavigationStack {
             List {
                 configurationSection
                 liveHeartRateSection
+                databaseSection
                 chartSection
                 recordsSection
                 eventsSection
@@ -29,6 +31,8 @@ struct iPhoneHeartRateBridgeView: View {
                 }
             }
             .task {
+                healthReader.apiBaseURL = URL(string: apiURLText) ?? healthReader.apiBaseURL
+                await checkAPI()
                 await syncDashboard()
             }
             .refreshable {
@@ -49,11 +53,31 @@ struct iPhoneHeartRateBridgeView: View {
                     healthReader.apiBaseURL = url
                     healthReader.lastStatus = "API base URL saved"
                     Task {
+                        await checkAPI()
                         await syncDashboard()
                     }
                 }
             }
 
+            Button("Use Demo Mac URL") {
+                apiURLText = "http://192.168.1.174:8787"
+                healthReader.apiBaseURL = URL(string: apiURLText)!
+                Task {
+                    await checkAPI()
+                    await syncDashboard()
+                }
+            }
+            .buttonStyle(.bordered)
+
+            Button("Test API / SQLite") {
+                Task {
+                    await checkAPI()
+                    await syncDashboard()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+
+            LabeledContent("API", value: apiStatus)
             LabeledContent("Health reader", value: healthReader.lastStatus)
             LabeledContent("Dashboard", value: isSyncing ? "Syncing" : syncStatus)
         }
@@ -62,7 +86,7 @@ struct iPhoneHeartRateBridgeView: View {
     private var liveHeartRateSection: some View {
         Section("Live Heart Rate") {
             HStack(alignment: .firstTextBaseline) {
-                Text("\(dashboard.latest?.heartRate ?? healthReader.lastPostedHeartRate ?? 0)")
+                Text("\(dashboard.latest?.heartRate ?? healthReader.lastPostedHeartRate ?? healthReader.lastReadHeartRate ?? 0)")
                     .font(.system(size: 52, weight: .bold, design: .rounded))
                 Text("bpm")
                     .font(.headline)
@@ -71,8 +95,10 @@ struct iPhoneHeartRateBridgeView: View {
 
             LabeledContent("Zone", value: dashboard.latest?.zone?.name ?? "--")
             LabeledContent("Source", value: dashboard.latest?.source ?? "iPhone Health")
+            LabeledContent("Latest Health read", value: healthReader.lastReadHeartRate.map { "\($0) bpm" } ?? "--")
             LabeledContent("Last posted", value: healthReader.lastPostedHeartRate.map { "\($0) bpm" } ?? "--")
             LabeledContent("Health sample", value: healthReader.lastSampleDate.map { $0.formatted(date: .abbreviated, time: .standard) } ?? "--")
+            LabeledContent("Imported", value: "\(healthReader.importedCount)")
 
             Button("Allow Health Access") {
                 Task {
@@ -83,8 +109,42 @@ struct iPhoneHeartRateBridgeView: View {
             Button("Read Latest Health Sample") {
                 Task {
                     await healthReader.fetchLatestAndPost()
+                    await checkAPI()
                     await syncDashboard()
                 }
+            }
+            .buttonStyle(.borderedProminent)
+
+            Button("Import Recent Health Samples") {
+                Task {
+                    await healthReader.importRecentSamples(limit: 30)
+                    await checkAPI()
+                    await syncDashboard()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+        }
+    }
+
+    private var databaseSection: some View {
+        Section("SQLite Database") {
+            LabeledContent("Samples", value: "\(dashboard.databaseSummary?.samples ?? dashboard.samples.count)")
+            LabeledContent("Avatar/events", value: "\(dashboard.databaseSummary?.events ?? dashboard.events.count)")
+            LabeledContent("Conversation", value: "\(dashboard.databaseSummary?.chat ?? dashboard.chatMessages.count)")
+            if let latest = dashboard.databaseSummary?.latest ?? dashboard.latest {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Latest row")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("\(latest.heartRate) bpm · \(latest.source)")
+                        .font(.headline)
+                    Text(latest.timestamp)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Text("No database rows yet")
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -187,6 +247,24 @@ struct iPhoneHeartRateBridgeView: View {
             syncStatus = "Synced \(dashboard.samples.count) samples"
         } catch {
             syncStatus = "Sync failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func checkAPI() async {
+        guard let baseURL = URL(string: apiURLText.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            apiStatus = "Invalid API URL"
+            return
+        }
+
+        do {
+            let summary = try await HeartWatchAPIClient(baseURL: baseURL).checkHealth()
+            apiStatus = summary.ok ? "SQLite online" : "API returned not ok"
+            dashboard.databaseSummary = summary
+            if let latest = summary.latest {
+                dashboard.latest = latest
+            }
+        } catch {
+            apiStatus = "Offline: \(error.localizedDescription)"
         }
     }
 }

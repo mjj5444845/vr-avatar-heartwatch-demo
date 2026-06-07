@@ -8,13 +8,23 @@ struct HeartWatchAPIClient {
         async let samples: [HeartRateSampleRecord] = fetchArray("/api/samples")
         async let events: [AvatarEventRecord] = fetchArray("/api/events")
         async let chat: [ChatMessageRecord] = fetchArray("/api/chat")
+        async let databaseSummary: DatabaseSummaryRecord? = fetchOptional("/api/db/summary")
 
         return try await HeartWatchDashboardData(
             latest: latest,
             samples: samples,
             events: events,
-            chatMessages: chat
+            chatMessages: chat,
+            databaseSummary: databaseSummary
         )
+    }
+
+    func checkHealth() async throws -> DatabaseSummaryRecord {
+        let summary: DatabaseSummaryRecord? = try await fetchOptional("/api/db/summary")
+        guard let summary else {
+            throw URLError(.badServerResponse)
+        }
+        return summary
     }
 
     private func fetchOptional<T: Decodable>(_ path: String) async throws -> T? {

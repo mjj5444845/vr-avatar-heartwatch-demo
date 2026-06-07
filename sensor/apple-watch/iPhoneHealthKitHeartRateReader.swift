@@ -6,7 +6,9 @@ final class iPhoneHealthKitHeartRateReader: ObservableObject {
     static let shared = iPhoneHealthKitHeartRateReader()
 
     @Published var lastPostedHeartRate: Int?
+    @Published var lastReadHeartRate: Int?
     @Published var lastSampleDate: Date?
+    @Published var importedCount = 0
     @Published var lastStatus = "Health access not requested"
 
     private let healthStore = HKHealthStore()
@@ -39,22 +41,39 @@ final class iPhoneHealthKitHeartRateReader: ObservableObject {
     }
 
     func fetchLatestAndPost() async {
-        guard let sample = await fetchLatestHeartRateSample() else {
+        guard let sample = await fetchRecentHeartRateSamples(limit: 1).first else {
             return
         }
 
         await postSample(heartRate: sample.heartRate, timestamp: sample.timestamp)
     }
 
-    private func fetchLatestHeartRateSample() async -> (heartRate: Int, timestamp: Date)? {
+    func importRecentSamples(limit: Int = 30) async {
+        let samples = await fetchRecentHeartRateSamples(limit: limit)
+        guard !samples.isEmpty else {
+            return
+        }
+
+        var posted = 0
+        for sample in samples.reversed() {
+            if await postSample(heartRate: sample.heartRate, timestamp: sample.timestamp) {
+                posted += 1
+            }
+        }
+
+        importedCount = posted
+        lastStatus = posted > 0 ? "Imported \(posted) Health samples" : "No samples posted"
+    }
+
+    private func fetchRecentHeartRateSamples(limit: Int) async -> [(heartRate: Int, timestamp: Date)] {
         guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
             lastStatus = "Heart rate type unavailable"
-            return nil
+            return []
         }
 
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
         let predicate = HKQuery.predicateForSamples(
-            withStart: Calendar.current.date(byAdding: .day, value: -7, to: Date()),
+            withStart: Calendar.current.date(byAdding: .day, value: -30, to: Date()),
             end: Date(),
             options: .strictEndDate
         )
@@ -63,27 +82,32 @@ final class iPhoneHealthKitHeartRateReader: ObservableObject {
             let query = HKSampleQuery(
                 sampleType: heartRateType,
                 predicate: predicate,
-                limit: 1,
+                limit: limit,
                 sortDescriptors: [sort]
             ) { [weak self] _, samples, error in
                 Task { @MainActor in
                     if let error {
                         self?.lastStatus = "Health read failed: \(error.localizedDescription)"
-                        continuation.resume(returning: nil)
+                        continuation.resume(returning: [])
                         return
                     }
 
-                    guard let sample = samples?.first as? HKQuantitySample else {
+                    guard let quantitySamples = samples as? [HKQuantitySample], !quantitySamples.isEmpty else {
                         self?.lastStatus = "No synced heart-rate samples found"
-                        continuation.resume(returning: nil)
+                        continuation.resume(returning: [])
                         return
                     }
 
                     let unit = HKUnit.count().unitDivided(by: .minute())
-                    let bpm = Int(sample.quantity.doubleValue(for: unit).rounded())
-                    self?.lastSampleDate = sample.endDate
-                    self?.lastStatus = "Read \(bpm) bpm from Health"
-                    continuation.resume(returning: (heartRate: bpm, timestamp: sample.endDate))
+                    let records = quantitySamples.map { sample in
+                        (heartRate: Int(sample.quantity.doubleValue(for: unit).rounded()), timestamp: sample.endDate)
+                    }
+                    if let first = records.first {
+                        self?.lastReadHeartRate = first.heartRate
+                        self?.lastSampleDate = first.timestamp
+                    }
+                    self?.lastStatus = "Read \(records.count) Health samples"
+                    continuation.resume(returning: records)
                 }
             }
 
@@ -91,7 +115,7 @@ final class iPhoneHealthKitHeartRateReader: ObservableObject {
         }
     }
 
-    private func postSample(heartRate: Int, timestamp: Date) async {
+    private func postSample(heartRate: Int, timestamp: Date) async -> Bool {
         let sampleURL = URL(string: "/api/samples", relativeTo: apiBaseURL)!.absoluteURL
         var request = URLRequest(url: sampleURL)
         request.httpMethod = "POST"
@@ -110,8 +134,10 @@ final class iPhoneHealthKitHeartRateReader: ObservableObject {
             let code = (response as? HTTPURLResponse)?.statusCode ?? 0
             lastPostedHeartRate = heartRate
             lastStatus = code >= 200 && code < 300 ? "Posted \(heartRate) bpm to API" : "API returned \(code)"
+            return code >= 200 && code < 300
         } catch {
             lastStatus = "Post failed: \(error.localizedDescription)"
+            return false
         }
     }
 }

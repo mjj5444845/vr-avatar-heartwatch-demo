@@ -12,6 +12,27 @@ app.get("/api/health", (_request, response) => {
   response.json({ ok: true, database: "sqlite" });
 });
 
+app.get("/api/db/summary", (_request, response) => {
+  const samples = db.prepare("SELECT COUNT(*) AS count FROM heart_rate_samples").get().count;
+  const events = db.prepare("SELECT COUNT(*) AS count FROM avatar_messages").get().count
+    + db.prepare("SELECT COUNT(*) AS count FROM vr_events").get().count;
+  const chat = db.prepare("SELECT COUNT(*) AS count FROM chat_messages").get().count;
+  const latest = db.prepare(`
+    SELECT id, source, heart_rate AS heartRate, timestamp
+    FROM heart_rate_samples
+    ORDER BY timestamp DESC
+    LIMIT 1
+  `).get();
+
+  response.json({
+    ok: true,
+    samples,
+    events,
+    chat,
+    latest: latest ? { ...latest, zone: getZone(latest.heartRate) } : null
+  });
+});
+
 app.post("/api/samples", (request, response) => {
   const sample = normalizeSample(request.body);
   const message = createAvatarMessage(sample);
