@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Text;
+using Meta.XR.BuildingBlocks.AIBlocks;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -23,17 +24,69 @@ public class LlmConversationController : MonoBehaviour
 {
     public string apiBaseUrl = "http://127.0.0.1:8787";
     public AvatarDialoguePanel dialoguePanel;
+    public HeartRateReceiver heartRateReceiver;
+    public TextToSpeechAgent textToSpeechAgent;
+    public float proactiveTopicIntervalSeconds = 10.0f;
+
+    private bool requestInFlight;
+    private float lastUserSpeechTime;
+    private float lastProactiveTopicTime;
+
+    private void Start()
+    {
+        lastUserSpeechTime = Time.time;
+        lastProactiveTopicTime = Time.time;
+        StartCoroutine(ProactiveHeartRateTopics());
+    }
 
     public void SubmitTranscript(string transcript)
     {
         if (!string.IsNullOrWhiteSpace(transcript))
         {
-            StartCoroutine(PostTranscript(transcript));
+            lastUserSpeechTime = Time.time;
+            StartCoroutine(PostTranscript(transcript, false));
         }
     }
 
-    private IEnumerator PostTranscript(string transcript)
+    public void SubmitHeartRateTopic()
     {
+        HeartRateSample sample = heartRateReceiver?.LatestSample;
+        string heartContext = sample == null
+            ? "The user has not spoken. Start a brief check-in because the heart-rate stream is not available yet."
+            : $"The user has not spoken. Start a brief check-in based on the current heart rate: {sample.heartRate} bpm, zone: {sample.zone?.name ?? "unknown"}, tone: {sample.zone?.tone ?? "unknown"}.";
+
+        StartCoroutine(PostTranscript(heartContext, true));
+    }
+
+    private IEnumerator ProactiveHeartRateTopics()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(0.5f);
+
+            if (requestInFlight)
+            {
+                continue;
+            }
+
+            float now = Time.time;
+            bool userHasBeenQuiet = now - lastUserSpeechTime >= proactiveTopicIntervalSeconds;
+            bool enoughTimeSinceLastTopic = now - lastProactiveTopicTime >= proactiveTopicIntervalSeconds;
+            if (userHasBeenQuiet && enoughTimeSinceLastTopic)
+            {
+                SubmitHeartRateTopic();
+            }
+        }
+    }
+
+    private IEnumerator PostTranscript(string transcript, bool proactive)
+    {
+        requestInFlight = true;
+        if (proactive)
+        {
+            lastProactiveTopicTime = Time.time;
+        }
+
         string json = JsonUtility.ToJson(new ChatRequest { text = transcript });
         using UnityWebRequest request = new UnityWebRequest($"{apiBaseUrl}/api/chat", "POST");
         byte[] body = Encoding.UTF8.GetBytes(json);
@@ -47,11 +100,13 @@ public class LlmConversationController : MonoBehaviour
         {
             ChatResponse response = JsonUtility.FromJson<ChatResponse>(request.downloadHandler.text);
             dialoguePanel?.SetReply(response.reply);
+            textToSpeechAgent?.SpeakText(response.reply);
         }
         else
         {
             dialoguePanel?.SetReply("I could not reach the LLM bridge yet.");
         }
+
+        requestInFlight = false;
     }
 }
-

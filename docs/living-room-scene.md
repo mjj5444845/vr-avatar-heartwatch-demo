@@ -21,32 +21,40 @@ In Unity:
 VR Avatar Demo > Build Living Room Avatar Scene
 ```
 
-The scene includes:
+The scene is intentionally minimal. It includes:
 
 - a compact living room shell,
-- sofa,
-- coffee table,
-- rug,
-- TV console,
-- television/electronics,
-- lamp,
-- shelf,
-- plant,
-- wall art,
+- one sofa,
+- one television/electronics prefab,
 - Robot Kyle standing as the conversation avatar,
-- Meta `OVRCameraRig`,
-- Meta `OVRInteractionComprehensive`,
-- Meta `OVRControllerDrivenHands`,
 - current heart-rate panel,
 - avatar reply panel.
 
+If no Meta camera rig exists in the scene, the builder adds `OVRCameraRig`. Existing Meta Building Blocks are preserved.
+
+## Voice Flow
+
+- Press the Quest 3 right-hand `A` button to start listening.
+- The scene uses Meta's `[BuildingBlock] Speech To Text` agent when it exists.
+- The transcript is sent to the local API at `http://127.0.0.1:8787/api/chat`.
+- Robot Kyle's reply is shown on the avatar reply panel.
+- If `[BuildingBlock] Text To Speech` exists, the same reply is spoken aloud.
+- In the Unity Editor, press Space as a fallback test trigger.
+
+When the user has not spoken for 10 seconds, `LlmConversationController` reads the latest heart-rate sample from `HeartRateReceiver` and asks the avatar to start a short check-in topic.
+
 ## Meta Building Blocks
 
-The scene instantiates Meta prefabs from installed packages when available. You can also add or replace components through Meta's Building Blocks window in Unity. Use the object named:
+The scene preserves Meta Building Blocks that you add through Meta's Building Blocks window, especially:
 
 ```text
-Meta Building Blocks Anchor
+[BuildingBlock] Speech To Text
+[BuildingBlock] Text To Speech
 ```
 
-as the organization point for added Camera Rig, Controller/Hand, Interaction, Voice, and Passthrough blocks.
+Two provider profiles live in `Assets/MetaXR`:
 
+- `SpeechToText_OpenAI_ProviderProfile.asset` uses `gpt-4o-mini-transcribe`.
+- `TextToSpeech_OpenAI_ProviderProfile.asset` uses `gpt-4o-mini-tts`.
+
+Do not commit an API key. Set credentials locally through Meta's provider UI or Unity's credential storage.

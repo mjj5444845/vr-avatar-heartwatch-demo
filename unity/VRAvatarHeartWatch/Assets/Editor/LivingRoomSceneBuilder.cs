@@ -1,30 +1,42 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
+using Meta.XR.BuildingBlocks.AIBlocks;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public static class LivingRoomSceneBuilder
 {
     private const string ScenePath = "Assets/Scenes/Quest3LivingRoomAvatar.unity";
+    private const string RootName = "Quest 3 Living Room Avatar Demo";
 
     [MenuItem("VR Avatar Demo/Build Living Room Avatar Scene")]
     public static void BuildScene()
     {
-        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        if (File.Exists(ScenePath))
+        {
+            EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            PreserveBuildingBlocks();
+            RemoveGeneratedDemoObjects();
+        }
+        else
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        }
 
-        GameObject root = new GameObject("Quest 3 Living Room Avatar Demo");
+        GameObject root = new GameObject(RootName);
         HeartRateReceiver receiver = CreateReceiver(root.transform);
-        LlmConversationController conversation = CreateConversation(root.transform);
+        LlmConversationController conversation = CreateConversation(root.transform, receiver);
+        QuestVoiceInputController voice = conversation.GetComponent<QuestVoiceInputController>();
 
-        CreateLivingRoomShell(root.transform);
-        CreateFurnitureLayout(root.transform);
+        CreateSimpleRoom(root.transform);
+        CreateSofaAndTv(root.transform);
         GameObject avatar = CreateRobotKyle(root.transform);
-        CreateMetaBuildingBlockRig(root.transform);
+        CreateQuestRigIfMissing(root.transform);
         CreateWorldPanels(receiver, conversation);
         CreateLighting();
+        WireMetaBuildingBlocks(conversation, voice);
 
         if (avatar != null)
         {
@@ -38,7 +50,42 @@ public static class LivingRoomSceneBuilder
 
         if (!Application.isBatchMode)
         {
-            EditorUtility.DisplayDialog("VR Avatar Demo", "Quest3LivingRoomAvatar.unity has been generated.", "OK");
+            EditorUtility.DisplayDialog("VR Avatar Demo", "Minimal Quest 3 living room scene has been generated.", "OK");
+        }
+    }
+
+    private static void PreserveBuildingBlocks()
+    {
+        foreach (Transform transform in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (transform.name.StartsWith("[BuildingBlock]"))
+            {
+                transform.SetParent(null, true);
+            }
+        }
+    }
+
+    private static void RemoveGeneratedDemoObjects()
+    {
+        string[] names =
+        {
+            RootName,
+            "Living Room Shell",
+            "Furniture Realistic Layout",
+            "Heart Rate Panel",
+            "Avatar Reply Panel",
+            "Soft Window Key Light",
+            "Warm Living Room Lamp Glow",
+            "Meta Building Blocks Anchor"
+        };
+
+        foreach (string name in names)
+        {
+            GameObject gameObject = GameObject.Find(name);
+            if (gameObject != null)
+            {
+                Object.DestroyImmediate(gameObject);
+            }
         }
     }
 
@@ -51,72 +98,62 @@ public static class LivingRoomSceneBuilder
         return receiver;
     }
 
-    private static LlmConversationController CreateConversation(Transform parent)
+    private static LlmConversationController CreateConversation(Transform parent, HeartRateReceiver receiver)
     {
         GameObject conversationObject = new GameObject("LLMConversationController");
         conversationObject.transform.SetParent(parent);
+
         LlmConversationController conversation = conversationObject.AddComponent<LlmConversationController>();
         conversation.apiBaseUrl = "http://127.0.0.1:8787";
-        conversationObject.AddComponent<QuestVoiceInputController>().conversationController = conversation;
+        conversation.heartRateReceiver = receiver;
+        conversation.proactiveTopicIntervalSeconds = 10f;
+
+        QuestVoiceInputController voice = conversationObject.AddComponent<QuestVoiceInputController>();
+        voice.conversationController = conversation;
         return conversation;
     }
 
-    private static void CreateLivingRoomShell(Transform parent)
+    private static void CreateSimpleRoom(Transform parent)
     {
         GameObject room = new GameObject("Living Room Shell");
         room.transform.SetParent(parent);
 
         InstantiatePrefabOrPrimitive(
             "Assets/ithappy/Furniture_Realistic/Prefabs/floor/floor_001.prefab",
-            "Floor", PrimitiveType.Cube, new Vector3(0, -0.04f, 0), Quaternion.identity, new Vector3(6.6f, 0.08f, 5.2f),
+            "Floor", PrimitiveType.Cube, new Vector3(0, -0.04f, 0), Quaternion.identity, new Vector3(5.5f, 0.08f, 4.4f),
             new Color(0.56f, 0.46f, 0.34f), room.transform);
         InstantiatePrefabOrPrimitive(
             "Assets/ithappy/Furniture_Realistic/Prefabs/wall/wall_001.prefab",
-            "Back Wall", PrimitiveType.Cube, new Vector3(0, 1.55f, 2.65f), Quaternion.identity, new Vector3(6.6f, 3.1f, 0.12f),
+            "Back Wall", PrimitiveType.Cube, new Vector3(0, 1.55f, 2.25f), Quaternion.identity, new Vector3(5.5f, 3.1f, 0.12f),
             new Color(0.78f, 0.80f, 0.77f), room.transform);
         InstantiatePrefabOrPrimitive(
             "Assets/ithappy/Furniture_Realistic/Prefabs/wall/wall_002.prefab",
-            "Left Wall", PrimitiveType.Cube, new Vector3(-3.3f, 1.55f, 0), Quaternion.identity, new Vector3(0.12f, 3.1f, 5.2f),
+            "Left Wall", PrimitiveType.Cube, new Vector3(-2.75f, 1.55f, 0), Quaternion.identity, new Vector3(0.12f, 3.1f, 4.4f),
             new Color(0.72f, 0.75f, 0.73f), room.transform);
         InstantiatePrefabOrPrimitive(
             "Assets/ithappy/Furniture_Realistic/Prefabs/wall/wall_003.prefab",
-            "Right Wall", PrimitiveType.Cube, new Vector3(3.3f, 1.55f, 0), Quaternion.identity, new Vector3(0.12f, 3.1f, 5.2f),
+            "Right Wall", PrimitiveType.Cube, new Vector3(2.75f, 1.55f, 0), Quaternion.identity, new Vector3(0.12f, 3.1f, 4.4f),
             new Color(0.72f, 0.75f, 0.73f), room.transform);
-        InstantiatePrefabOrPrimitive(
-            "Assets/ithappy/Furniture_Realistic/Prefabs/window/window_001.prefab",
-            "Window", PrimitiveType.Cube, new Vector3(-1.9f, 1.55f, 2.55f), Quaternion.Euler(0, 180, 0), new Vector3(1.15f, 0.85f, 0.08f),
-            new Color(0.55f, 0.75f, 0.92f), room.transform);
-        InstantiatePrefabOrPrimitive(
-            "Assets/ithappy/Furniture_Realistic/Prefabs/curtain/curtain_001.prefab",
-            "Curtains", PrimitiveType.Cube, new Vector3(-1.9f, 1.55f, 2.48f), Quaternion.Euler(0, 180, 0), new Vector3(1.65f, 1.2f, 0.05f),
-            new Color(0.28f, 0.34f, 0.45f), room.transform);
     }
 
-    private static void CreateFurnitureLayout(Transform parent)
+    private static void CreateSofaAndTv(Transform parent)
     {
         GameObject furniture = new GameObject("Furniture Realistic Layout");
         furniture.transform.SetParent(parent);
 
-        Place("Assets/ithappy/Furniture_Realistic/Prefabs/sofa/sofa_003.prefab", "Sofa", new Vector3(0, 0, 1.75f), Quaternion.Euler(0, 180, 0), new Vector3(1.2f, 1.2f, 1.2f), furniture.transform);
-        Place("Assets/ithappy/Furniture_Realistic/Prefabs/coffee_table/coffee_table_006.prefab", "Coffee Table", new Vector3(0, 0, 0.45f), Quaternion.identity, Vector3.one, furniture.transform);
-        Place("Assets/ithappy/Furniture_Realistic/Prefabs/carpet/carpet_004.prefab", "Area Rug", new Vector3(0, 0.01f, 0.35f), Quaternion.identity, new Vector3(1.3f, 1.3f, 1.3f), furniture.transform);
-        Place("Assets/ithappy/Furniture_Realistic/Prefabs/entertainment/entertainment_004.prefab", "TV Console", new Vector3(0, 0, -2.15f), Quaternion.identity, Vector3.one, furniture.transform);
-        Place("Assets/ithappy/Furniture_Realistic/Prefabs/electronics/electronics_001.prefab", "Television", new Vector3(0, 0.92f, -2.23f), Quaternion.identity, new Vector3(1.05f, 1.05f, 1.05f), furniture.transform);
-        Place("Assets/ithappy/Furniture_Realistic/Prefabs/lamp/lamp_006.prefab", "Floor Lamp", new Vector3(2.35f, 0, 1.35f), Quaternion.Euler(0, -25, 0), Vector3.one, furniture.transform);
-        Place("Assets/ithappy/Furniture_Realistic/Prefabs/shelf/shelf_004.prefab", "Side Shelf", new Vector3(-2.55f, 0, -1.15f), Quaternion.Euler(0, 90, 0), Vector3.one, furniture.transform);
-        Place("Assets/ithappy/Furniture_Realistic/Prefabs/flower/flower_003.prefab", "Plant", new Vector3(-2.45f, 0, 1.55f), Quaternion.identity, Vector3.one, furniture.transform);
-        Place("Assets/ithappy/Furniture_Realistic/Prefabs/picture/picture_006.prefab", "Wall Art", new Vector3(1.55f, 1.75f, 2.49f), Quaternion.Euler(0, 180, 0), Vector3.one, furniture.transform);
+        Place("Assets/ithappy/Furniture_Realistic/Prefabs/sofa/sofa_003.prefab", "Sofa", new Vector3(0, 0, 1.25f), Quaternion.Euler(0, 180, 0), new Vector3(1.2f, 1.2f, 1.2f), furniture.transform);
+        Place("Assets/ithappy/Furniture_Realistic/Prefabs/electronics/electronics_001.prefab", "Television", new Vector3(0, 0.9f, -1.9f), Quaternion.identity, new Vector3(1.1f, 1.1f, 1.1f), furniture.transform);
     }
 
     private static GameObject CreateRobotKyle(Transform parent)
     {
-        GameObject avatar = Place("Assets/UnityTechnologies/SpaceRobotKyle/Prefabs/RobotKyle.prefab", "Robot Kyle - Avatar", new Vector3(1.45f, 0, 0.1f), Quaternion.Euler(0, -125, 0), new Vector3(1.1f, 1.1f, 1.1f), parent);
+        GameObject avatar = Place("Assets/UnityTechnologies/SpaceRobotKyle/Prefabs/RobotKyle.prefab", "Robot Kyle - Avatar", new Vector3(1.35f, 0, -0.15f), Quaternion.Euler(0, -120, 0), new Vector3(1.1f, 1.1f, 1.1f), parent);
         if (avatar == null)
         {
             avatar = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             avatar.name = "Robot Kyle Missing - Placeholder Avatar";
             avatar.transform.SetParent(parent);
-            avatar.transform.position = new Vector3(1.45f, 0.95f, 0.1f);
+            avatar.transform.position = new Vector3(1.35f, 0.95f, -0.15f);
             avatar.transform.localScale = new Vector3(0.55f, 0.95f, 0.55f);
         }
 
@@ -136,27 +173,29 @@ public static class LivingRoomSceneBuilder
         return avatar;
     }
 
-    private static void CreateMetaBuildingBlockRig(Transform parent)
+    private static void CreateQuestRigIfMissing(Transform parent)
     {
+        if (Object.FindFirstObjectByType<OVRCameraRig>() != null || GameObject.Find("Meta OVRCameraRig") != null)
+        {
+            return;
+        }
+
         GameObject anchor = new GameObject("Meta Building Blocks Anchor");
         anchor.transform.SetParent(parent);
         anchor.transform.position = Vector3.zero;
 
-        GameObject cameraRig = PlacePackagePrefab("Packages/com.meta.xr.sdk.core/Prefabs/OVRCameraRig.prefab", "Meta OVRCameraRig", new Vector3(0, 0, -1.25f), Quaternion.identity, Vector3.one, anchor.transform);
+        GameObject cameraRig = PlacePackagePrefab("Packages/com.meta.xr.sdk.core/Prefabs/OVRCameraRig.prefab", "Meta OVRCameraRig", new Vector3(0, 0, -1.2f), Quaternion.identity, Vector3.one, anchor.transform);
         if (cameraRig == null)
         {
             CreateQuestRigFallback(anchor.transform);
         }
-
-        PlacePackagePrefab("Packages/com.meta.xr.sdk.interaction.ovr/Runtime/Prefabs/OVRInteractionComprehensive.prefab", "Meta OVR Interaction Comprehensive", Vector3.zero, Quaternion.identity, Vector3.one, anchor.transform);
-        PlacePackagePrefab("Packages/com.meta.xr.sdk.interaction.ovr/Runtime/Prefabs/OVRControllerDrivenHands.prefab", "Meta Controller Driven Hands", Vector3.zero, Quaternion.identity, Vector3.one, anchor.transform);
     }
 
     private static void CreateQuestRigFallback(Transform parent)
     {
         GameObject rig = new GameObject("Fallback XR Camera Rig");
         rig.transform.SetParent(parent);
-        rig.transform.position = new Vector3(0, 0, -1.25f);
+        rig.transform.position = new Vector3(0, 0, -1.2f);
 
         GameObject camera = new GameObject("Main Camera");
         camera.tag = "MainCamera";
@@ -168,17 +207,17 @@ public static class LivingRoomSceneBuilder
 
     private static void CreateWorldPanels(HeartRateReceiver receiver, LlmConversationController conversation)
     {
-        Canvas heartCanvas = CreatePanelCanvas("Heart Rate Panel", new Vector3(-1.75f, 1.45f, -0.95f), Quaternion.Euler(0, 25, 0), new Vector2(1.45f, 0.75f));
-        Text heartValue = CreateText(heartCanvas.transform, "Heart Rate Value", "-- bpm", new Vector2(0, 28), 42, TextAnchor.MiddleCenter);
-        Text heartZone = CreateText(heartCanvas.transform, "Heart Rate Zone", "waiting for Apple Watch", new Vector2(0, -55), 22, TextAnchor.MiddleCenter);
+        Canvas heartCanvas = CreatePanelCanvas("Heart Rate Panel", new Vector3(-1.45f, 1.35f, -0.8f), Quaternion.Euler(0, 25, 0), new Vector2(1.25f, 0.55f));
+        Text heartValue = CreateText(heartCanvas.transform, "Heart Rate Value", "-- bpm", new Vector2(0, 36), 42, TextAnchor.MiddleCenter);
+        Text heartZone = CreateText(heartCanvas.transform, "Heart Rate Zone", "waiting for Apple Watch", new Vector2(0, -52), 21, TextAnchor.MiddleCenter);
 
         HeartRateWorldPanel panel = heartCanvas.gameObject.AddComponent<HeartRateWorldPanel>();
         panel.receiver = receiver;
         panel.heartRateText = heartValue;
         panel.zoneText = heartZone;
 
-        Canvas dialogueCanvas = CreatePanelCanvas("Avatar Reply Panel", new Vector3(1.0f, 1.75f, -0.72f), Quaternion.Euler(0, -18, 0), new Vector2(2.2f, 0.9f));
-        Text replyText = CreateText(dialogueCanvas.transform, "Reply Text", "Hi, I am Robot Kyle. Ask me how your session feels.", new Vector2(0, 0), 25, TextAnchor.MiddleCenter);
+        Canvas dialogueCanvas = CreatePanelCanvas("Avatar Reply Panel", new Vector3(0.95f, 1.7f, -0.85f), Quaternion.Euler(0, -18, 0), new Vector2(2.0f, 0.75f));
+        Text replyText = CreateText(dialogueCanvas.transform, "Reply Text", "Press A and talk. I will reply here.", new Vector2(0, 0), 25, TextAnchor.MiddleCenter);
 
         AvatarDialoguePanel dialoguePanel = dialogueCanvas.gameObject.AddComponent<AvatarDialoguePanel>();
         dialoguePanel.replyText = replyText;
@@ -230,18 +269,56 @@ public static class LivingRoomSceneBuilder
         GameObject sunObject = new GameObject("Soft Window Key Light");
         Light sun = sunObject.AddComponent<Light>();
         sun.type = LightType.Directional;
-        sun.intensity = 1.1f;
+        sun.intensity = 1.0f;
         sunObject.transform.rotation = Quaternion.Euler(42, -32, 0);
 
         GameObject warmLampObject = new GameObject("Warm Living Room Lamp Glow");
         Light warmLamp = warmLampObject.AddComponent<Light>();
         warmLamp.type = LightType.Point;
-        warmLamp.intensity = 2.4f;
-        warmLamp.range = 5f;
+        warmLamp.intensity = 1.8f;
+        warmLamp.range = 4f;
         warmLamp.color = new Color(1.0f, 0.78f, 0.52f);
-        warmLampObject.transform.position = new Vector3(2.35f, 1.6f, 1.35f);
+        warmLampObject.transform.position = new Vector3(1.7f, 1.8f, 1.2f);
 
         RenderSettings.ambientLight = new Color(0.36f, 0.38f, 0.42f);
+    }
+
+    private static void WireMetaBuildingBlocks(LlmConversationController conversation, QuestVoiceInputController voice)
+    {
+        SpeechToTextAgent stt = Object.FindFirstObjectByType<SpeechToTextAgent>();
+        TextToSpeechAgent tts = Object.FindFirstObjectByType<TextToSpeechAgent>();
+        AIProviderBase sttProvider = AssetDatabase.LoadAssetAtPath<AIProviderBase>("Assets/MetaXR/SpeechToText_OpenAI_ProviderProfile.asset");
+        AIProviderBase ttsProvider = AssetDatabase.LoadAssetAtPath<AIProviderBase>("Assets/MetaXR/TextToSpeech_OpenAI_ProviderProfile.asset");
+
+        AssignProvider(stt, sttProvider);
+        AssignProvider(tts, ttsProvider);
+
+        if (voice != null)
+        {
+            voice.speechToTextAgent = stt;
+        }
+
+        if (conversation != null)
+        {
+            conversation.textToSpeechAgent = tts;
+        }
+    }
+
+    private static void AssignProvider(Object agent, AIProviderBase provider)
+    {
+        if (agent == null || provider == null)
+        {
+            return;
+        }
+
+        SerializedObject serializedObject = new SerializedObject(agent);
+        SerializedProperty providerProperty = serializedObject.FindProperty("providerAsset");
+        if (providerProperty != null)
+        {
+            providerProperty.objectReferenceValue = provider;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(agent);
+        }
     }
 
     private static GameObject Place(string path, string name, Vector3 position, Quaternion rotation, Vector3 scale, Transform parent)
@@ -297,4 +374,3 @@ public static class LivingRoomSceneBuilder
         return material;
     }
 }
-
