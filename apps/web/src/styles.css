@@ -89,7 +89,8 @@ h2 {
 
 .status-card,
 .live-panel,
-.dashboard-grid article {
+.dashboard-grid article,
+.conversation-section article {
   background: #ffffff;
   border: 1px solid #d9e1ec;
   border-radius: 8px;
@@ -258,6 +259,19 @@ h2 {
   padding: 18px;
 }
 
+.conversation-section {
+  margin-top: 16px;
+}
+
+.conversation-section article {
+  padding: 18px;
+}
+
+.conversation-section td:last-child {
+  min-width: 360px;
+  white-space: normal;
+}
+
 .table-wrap {
   max-height: 360px;
   overflow: auto;
@@ -338,4 +352,3 @@ th {
     min-height: 420px;
   }
 }
-

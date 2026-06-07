@@ -9,6 +9,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 export default function App() {
   const [samples, setSamples] = useState([]);
   const [events, setEvents] = useState([]);
+  const [chatMessages, setChatMessages] = useState([]);
   const [streaming, setStreaming] = useState(false);
   const latest = samples[0];
   const latestZone = latest ? getHeartRateZone(latest.heartRate) : null;
@@ -43,12 +44,14 @@ export default function App() {
   async function loadData() {
     if (!API_BASE_URL) return;
 
-    const [sampleResponse, eventResponse] = await Promise.all([
+    const [sampleResponse, eventResponse, chatResponse] = await Promise.all([
       fetch(`${API_BASE_URL}/api/samples`),
-      fetch(`${API_BASE_URL}/api/events`)
+      fetch(`${API_BASE_URL}/api/events`),
+      fetch(`${API_BASE_URL}/api/chat`)
     ]);
     setSamples(await sampleResponse.json());
     setEvents(await eventResponse.json());
+    setChatMessages(await chatResponse.json());
   }
 
   async function logVrEvent() {
@@ -173,6 +176,38 @@ export default function App() {
           </div>
         </article>
       </section>
+
+      <section className="conversation-section">
+        <article>
+          <h2>Conversation records</h2>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Role</th>
+                  <th>Text type</th>
+                  <th>Initiator</th>
+                  <th>Heart rate</th>
+                  <th>Text</th>
+                </tr>
+              </thead>
+              <tbody>
+                {chatMessages.slice(0, 30).map((message) => (
+                  <tr key={message.id}>
+                    <td>{formatTime(message.timestamp)}</td>
+                    <td>{message.role}</td>
+                    <td>{formatLabel(message.messageType)}</td>
+                    <td>{formatLabel(message.conversationInitiator)}</td>
+                    <td>{message.heartRate ? `${message.heartRate} bpm` : "--"}</td>
+                    <td>{message.text}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
     </main>
   );
 }
@@ -208,3 +243,6 @@ function formatTime(value) {
   }).format(new Date(value));
 }
 
+function formatLabel(value) {
+  return String(value || "unknown").replaceAll("_", " ");
+}

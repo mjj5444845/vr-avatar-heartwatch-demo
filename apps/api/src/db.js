@@ -41,11 +41,23 @@ db.exec(`
     id TEXT PRIMARY KEY,
     role TEXT NOT NULL,
     text TEXT NOT NULL,
+    message_type TEXT NOT NULL DEFAULT 'spoken_text',
+    conversation_initiator TEXT NOT NULL DEFAULT 'user',
     heart_rate INTEGER,
     zone TEXT,
     timestamp TEXT NOT NULL
   );
 `);
+
+ensureColumn("chat_messages", "message_type", "TEXT NOT NULL DEFAULT 'spoken_text'");
+ensureColumn("chat_messages", "conversation_initiator", "TEXT NOT NULL DEFAULT 'user'");
+
+function ensureColumn(tableName, columnName, definition) {
+  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all();
+  if (!columns.some((column) => column.name === columnName)) {
+    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+  }
+}
 
 export function getZone(heartRate) {
   if (heartRate < 70) return { name: "calm", tone: "steady" };

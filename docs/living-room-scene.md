@@ -1,4 +1,4 @@
-# Living Room Scene
+# Day Floor Avatar Scene
 
 The generated scene is:
 
@@ -23,14 +23,12 @@ VR Avatar Demo > Build Living Room Avatar Scene
 
 The scene is intentionally minimal. It includes:
 
-- a compact living room shell,
-- one sofa,
-- one television/electronics prefab,
+- a daylight floor stage,
 - Robot Kyle standing as the conversation avatar,
 - current heart-rate panel,
 - avatar reply panel.
 
-If no Meta camera rig exists in the scene, the builder adds `OVRCameraRig`. Existing Meta Building Blocks are preserved.
+The Quest view starts in front of Robot Kyle, facing the avatar. If no Meta camera rig exists in the scene, the builder adds `OVRCameraRig`. Existing Meta Building Blocks are preserved.
 
 ## Voice Flow
 
@@ -42,6 +40,15 @@ If no Meta camera rig exists in the scene, the builder adds `OVRCameraRig`. Exis
 - In the Unity Editor, press Space as a fallback test trigger.
 
 When the user has not spoken for 10 seconds, `LlmConversationController` reads the latest heart-rate sample from `HeartRateReceiver` and asks the avatar to start a short check-in topic.
+
+Conversation records are stored by the API with:
+
+- `role`: `user` or `avatar`
+- `messageType`: `user_speech`, `avatar_reply`, `sensor_prompt`, or `system`
+- `conversationInitiator`: `user` or `avatar`
+- `heartRate` and `zone` when a sample is available
+
+The Web Dashboard reads these rows from `/api/chat`.
 
 ## Meta Building Blocks
 

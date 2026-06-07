@@ -9,6 +9,8 @@ using UnityEngine.Networking;
 public class ChatRequest
 {
     public string text;
+    public string messageType;
+    public string conversationInitiator;
 }
 
 [Serializable]
@@ -44,7 +46,7 @@ public class LlmConversationController : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(transcript))
         {
             lastUserSpeechTime = Time.time;
-            StartCoroutine(PostTranscript(transcript, false));
+            StartCoroutine(PostTranscript(transcript, "user_speech", "user", false));
         }
     }
 
@@ -55,7 +57,7 @@ public class LlmConversationController : MonoBehaviour
             ? "The user has not spoken. Start a brief check-in because the heart-rate stream is not available yet."
             : $"The user has not spoken. Start a brief check-in based on the current heart rate: {sample.heartRate} bpm, zone: {sample.zone?.name ?? "unknown"}, tone: {sample.zone?.tone ?? "unknown"}.";
 
-        StartCoroutine(PostTranscript(heartContext, true));
+        StartCoroutine(PostTranscript(heartContext, "sensor_prompt", "avatar", true));
     }
 
     private IEnumerator ProactiveHeartRateTopics()
@@ -79,7 +81,7 @@ public class LlmConversationController : MonoBehaviour
         }
     }
 
-    private IEnumerator PostTranscript(string transcript, bool proactive)
+    private IEnumerator PostTranscript(string transcript, string messageType, string conversationInitiator, bool proactive)
     {
         requestInFlight = true;
         if (proactive)
@@ -87,7 +89,12 @@ public class LlmConversationController : MonoBehaviour
             lastProactiveTopicTime = Time.time;
         }
 
-        string json = JsonUtility.ToJson(new ChatRequest { text = transcript });
+        string json = JsonUtility.ToJson(new ChatRequest
+        {
+            text = transcript,
+            messageType = messageType,
+            conversationInitiator = conversationInitiator
+        });
         using UnityWebRequest request = new UnityWebRequest($"{apiBaseUrl}/api/chat", "POST");
         byte[] body = Encoding.UTF8.GetBytes(json);
         request.uploadHandler = new UploadHandlerRaw(body);

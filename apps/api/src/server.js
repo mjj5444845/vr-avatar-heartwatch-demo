@@ -94,6 +94,8 @@ app.post("/api/chat", (request, response) => {
     return;
   }
 
+  const messageType = normalizeMessageType(request.body.messageType || request.body.message_type);
+  const conversationInitiator = normalizeConversationInitiator(request.body.conversationInitiator || request.body.conversation_initiator);
   const latest = db.prepare(`
     SELECT heart_rate AS heartRate
     FROM heart_rate_samples
@@ -105,6 +107,8 @@ app.post("/api/chat", (request, response) => {
     id: crypto.randomUUID(),
     role: "user",
     text: transcript,
+    messageType,
+    conversationInitiator,
     heartRate: latest?.heartRate || null,
     zone: zone.name,
     timestamp: new Date().toISOString()
@@ -113,14 +117,16 @@ app.post("/api/chat", (request, response) => {
     id: crypto.randomUUID(),
     role: "avatar",
     text: createChatReply(transcript, latest?.heartRate, zone),
+    messageType: "avatar_reply",
+    conversationInitiator,
     heartRate: latest?.heartRate || null,
     zone: zone.name,
     timestamp: new Date().toISOString()
   };
 
   const insert = db.prepare(`
-    INSERT INTO chat_messages (id, role, text, heart_rate, zone, timestamp)
-    VALUES (@id, @role, @text, @heartRate, @zone, @timestamp)
+    INSERT INTO chat_messages (id, role, text, message_type, conversation_initiator, heart_rate, zone, timestamp)
+    VALUES (@id, @role, @text, @messageType, @conversationInitiator, @heartRate, @zone, @timestamp)
   `);
   db.transaction(() => {
     insert.run(userMessage);
@@ -130,6 +136,8 @@ app.post("/api/chat", (request, response) => {
   response.json({
     transcript,
     reply: assistantMessage.text,
+    messageType,
+    conversationInitiator,
     heartRate: latest?.heartRate || null,
     zone
   });
@@ -137,7 +145,15 @@ app.post("/api/chat", (request, response) => {
 
 app.get("/api/chat", (_request, response) => {
   const rows = db.prepare(`
-    SELECT id, role, text, heart_rate AS heartRate, zone, timestamp
+    SELECT
+      id,
+      role,
+      text,
+      message_type AS messageType,
+      conversation_initiator AS conversationInitiator,
+      heart_rate AS heartRate,
+      zone,
+      timestamp
     FROM chat_messages
     ORDER BY timestamp DESC
     LIMIT 80
@@ -179,4 +195,14 @@ function createChatReply(transcript, heartRate, zone) {
   }
 
   return `${state} I heard: "${transcript}". I will adapt the avatar response to your current state.`;
+}
+
+function normalizeMessageType(value) {
+  const allowed = new Set(["user_speech", "avatar_reply", "sensor_prompt", "system"]);
+  return allowed.has(value) ? value : "user_speech";
+}
+
+function normalizeConversationInitiator(value) {
+  const allowed = new Set(["user", "avatar"]);
+  return allowed.has(value) ? value : "user";
 }

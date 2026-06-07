@@ -34,7 +34,7 @@ public class QuestVoiceInputController : MonoBehaviour
 
         if (speechToTextAgent == null)
         {
-            speechToTextAgent = FindFirstObjectByType<SpeechToTextAgent>();
+            speechToTextAgent = FindAnyObjectByType<SpeechToTextAgent>();
         }
     }
 
