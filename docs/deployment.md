@@ -4,12 +4,9 @@
 
 1. Import `mjj5444845/vr-avatar-heartwatch-demo` in Vercel.
 2. Keep the default build settings from `vercel.json`.
-3. Add `VITE_API_BASE_URL` only if you have a reachable API endpoint.
-4. Deploy.
+3. Deploy.
 
-The React dashboard can run without an API in mock mode.
-
-If you want the hosted Vercel dashboard to show live Apple Watch data, `VITE_API_BASE_URL` must point to a public HTTPS API. A local Mac URL such as `http://192.168.1.20:8787` only works for devices on the same network and is not reachable from Vercel users outside that network.
+The Vercel site is a static project README. It explains the architecture, setup flow, iPhone install flow, API contract, and test checklist. It does not fetch live Apple Watch data.
 
 ## GitHub Pages
 
@@ -18,7 +15,7 @@ If you want the hosted Vercel dashboard to show live Apple Watch data, `VITE_API
 3. Set source to **GitHub Actions**.
 4. Push to `main` or run the workflow manually.
 
-The workflow builds `apps/web` and publishes `apps/web/dist`.
+The workflow builds `apps/web` and publishes `apps/web/dist`. This is the same static project README site.
 
 ## SQLite Hosting Note
 
@@ -27,6 +24,7 @@ Local SQLite works through `apps/api`. Vercel and GitHub Pages do not provide a 
 For this demo, the simplest reliable live setup is:
 
 1. Run `npm run api:dev` on your Mac.
-2. Run the iPhone/Apple Watch bridge on the same Wi-Fi.
-3. Point Unity Quest 3 and the local React dashboard at `http://YOUR_MAC_IP:8787`.
-4. Use Vercel/GitHub Pages for mock mode or for a dashboard connected to a separately hosted API.
+2. Run the iPhone app and Apple Watch app on the same Wi-Fi.
+3. Point Unity Quest 3 and the iPhone app at `http://YOUR_MAC_IP:8787`.
+4. Use the iPhone app as the live dashboard.
+5. Use Vercel/GitHub Pages only for static project documentation.

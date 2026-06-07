@@ -57,7 +57,7 @@ Conversation records are stored by the API with:
 - `conversationInitiator`: `user` or `avatar`
 - `heartRate` and `zone` when a sample is available
 
-The Web Dashboard reads these rows from `/api/chat`.
+The iPhone app reads these rows from `/api/chat`.
 
 ## Meta Building Blocks
 

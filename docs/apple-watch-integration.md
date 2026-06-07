@@ -1,6 +1,8 @@
 # Apple Watch Integration Notes
 
-The real-time path requires a watchOS app. Apple Watch does not expose a live browser heart-rate stream directly, so the smallest reliable implementation is HealthKit on watchOS plus WatchConnectivity to an iPhone companion app.
+The real-time path requires a watchOS app. Apple Watch does not expose a live browser heart-rate stream directly, so the smallest reliable implementation is HealthKit on watchOS plus WatchConnectivity to an iPhone app.
+
+The iPhone app is now the live application interface. It forwards Watch samples to SQLite and reads back heart-rate records, avatar events, and VR conversation logs.
 
 ## Minimal Real Path
 
@@ -8,7 +10,8 @@ The real-time path requires a watchOS app. Apple Watch does not expose a live br
 2. Start an `HKWorkoutSession` and collect live samples with `HKLiveWorkoutBuilder`.
 3. Send samples from Watch to iPhone through WatchConnectivity.
 4. The iPhone app posts samples to `POST /api/samples`.
-5. Keep the payload contract stable:
+5. The iPhone app fetches `/api/latest`, `/api/samples`, `/api/events`, and `/api/chat`.
+6. Keep the payload contract stable:
 
 ```json
 {
@@ -20,8 +23,8 @@ The real-time path requires a watchOS app. Apple Watch does not expose a live br
 
 ## Demo Bridge Options
 
-- **Fastest local demo**: watchOS app sends to an iPhone companion, companion posts to the local SQLite API on your Mac.
-- **Hosted demo**: companion app posts to a public API that stores data in SQLite-compatible storage.
+- **Fastest local demo**: watchOS app sends to the iPhone app, and the iPhone app posts to the local SQLite API on your Mac.
+- **Hosted demo**: iPhone app posts to a public API that stores data in SQLite-compatible storage.
 - **No native app**: import Health export data as JSON/CSV for replay mode.
 
 ## Use Your Apple Watch For Live Heart Rate
@@ -33,10 +36,10 @@ npm run api:dev
 ```
 
 2. Find your Mac LAN IP address.
-3. Set the iPhone bridge API URL to `http://YOUR_MAC_IP:8787/api/samples`.
+3. Set the iPhone app API base URL to `http://YOUR_MAC_IP:8787`.
 4. Build and run the iPhone + watchOS app from Xcode.
 5. Open the Watch app, tap start, and approve Health permission.
-6. Open the React dashboard. It polls the API automatically when `VITE_API_BASE_URL` is set.
+6. Open the iPhone app and tap Sync. It should show the latest sample, chart, events, and conversations.
 7. In Unity, set `HeartRateReceiver.apiBaseUrl` to `http://YOUR_MAC_IP:8787` and play or build the scene.
 
 ## Xcode Target Setup
@@ -53,6 +56,8 @@ iPhone target
 sensor/apple-watch/iPhoneHeartRateBridgeApp.swift
 sensor/apple-watch/iPhoneHeartRateBridgeView.swift
 sensor/apple-watch/iPhoneWatchConnectivityBridge.swift
+sensor/apple-watch/HeartWatchModels.swift
+sensor/apple-watch/HeartWatchAPIClient.swift
 ```
 
 Do not compile both `@main` app files in the same target.
@@ -71,15 +76,17 @@ NSHealthShareUsageDescription = This demo reads heart rate to drive the VR avata
 
 If your iPhone posts to `http://YOUR_MAC_IP:8787`, allow local networking and cleartext HTTP for development in the iPhone target. For a public demo, prefer HTTPS through a tunnel or hosted API.
 
+For iPhone installation, Developer Mode, signing, and target setup details, see `docs/ios-application.md`.
+
 ## Confirm The Full Stream
 
 1. Start `npm run api:dev`.
-2. Set the iPhone app API URL to `http://YOUR_MAC_IP:8787/api/samples`.
+2. Set the iPhone app API base URL to `http://YOUR_MAC_IP:8787`.
 3. Tap Start on the Watch app.
 4. Check `http://YOUR_MAC_IP:8787/api/latest`; it should return the newest sample.
 5. Open the Unity scene; the heart-rate panel reads `/api/latest`.
-6. Open the Web Dashboard with `VITE_API_BASE_URL=http://YOUR_MAC_IP:8787`; the table and chart poll `/api/samples`.
-7. Advance scripted VR dialogue; `/api/chat/records` stores message type and initiator for Web display.
+6. Open the iPhone app; the chart reads `/api/samples`, events read `/api/events`, and conversations read `/api/chat`.
+7. Advance scripted VR dialogue; `/api/chat/records` stores message type and initiator for iPhone display.
 
 ## Privacy Notes
 

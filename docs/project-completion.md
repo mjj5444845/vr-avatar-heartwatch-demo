@@ -1,6 +1,6 @@
 # Project Completion Notes
 
-This document records the current working demo path: Apple Watch heart-rate samples flow into SQLite, Unity Quest 3 reads the newest sample, and the React dashboard displays stored heart-rate and conversation records.
+This document records the current working demo path: Apple Watch heart-rate samples flow into SQLite, Unity Quest 3 reads the newest sample, and the iPhone app displays stored heart-rate charts, events, and conversation records.
 
 ## Current Implementation
 
@@ -15,10 +15,14 @@ This document records the current working demo path: Apple Watch heart-rate samp
 - Avatar gestures use the three clips in `unity/VRAvatarHeartWatch/Assets/AvatarMotion`.
 - Heart-rate panel reads `GET /api/latest`.
 - Scripted dialogue writes to `POST /api/chat/records`.
-- Web Dashboard polls:
+- iPhone app fetches:
   - `GET /api/samples`
   - `GET /api/events`
   - `GET /api/chat`
+- Static Web page:
+  - documents the project setup and test flow,
+  - deploys to Vercel/GitHub Pages,
+  - does not fetch live data.
 - SQLite API stores:
   - `heart_rate_samples`
   - `avatar_messages`
@@ -61,24 +65,20 @@ Find your Mac LAN IP for Quest 3 and iPhone testing. Example:
 http://192.168.1.20:8787
 ```
 
-Start the dashboard against the API:
+Open the iPhone app and set the API base URL to the Mac LAN IP:
 
-```bash
-VITE_API_BASE_URL=http://192.168.1.20:8787 npm run web:dev
+```text
+http://192.168.1.20:8787
 ```
 
-For same-Mac browser testing, this also works:
-
-```bash
-VITE_API_BASE_URL=http://127.0.0.1:8787 npm run web:dev
-```
+Tap Sync to load `/api/latest`, `/api/samples`, `/api/events`, and `/api/chat`.
 
 ## Apple Watch Heart-rate Stream
 
 Apple Watch cannot stream live heart rate directly to a normal web page. The lightweight real path is:
 
 ```text
-Apple Watch HealthKit -> WatchConnectivity -> iPhone companion app -> SQLite API
+Apple Watch HealthKit -> WatchConnectivity -> iPhone app -> SQLite API
 ```
 
 In Xcode:
@@ -92,14 +92,16 @@ In Xcode:
    - `sensor/apple-watch/iPhoneHeartRateBridgeApp.swift`
    - `sensor/apple-watch/iPhoneHeartRateBridgeView.swift`
    - `sensor/apple-watch/iPhoneWatchConnectivityBridge.swift`
+   - `sensor/apple-watch/HeartWatchModels.swift`
+   - `sensor/apple-watch/HeartWatchAPIClient.swift`
 4. Enable HealthKit on the Watch target.
 5. Enable WatchConnectivity on both targets.
 6. Add `NSHealthShareUsageDescription` to the Watch target Info settings.
 7. Run the iPhone app and Watch app on your devices.
-8. In the iPhone app, set the API URL:
+8. In the iPhone app, set the API base URL:
 
 ```text
-http://YOUR_MAC_IP:8787/api/samples
+http://YOUR_MAC_IP:8787
 ```
 
 9. Open the Watch app, tap Start, and accept Health permissions.
@@ -146,17 +148,17 @@ VR Avatar Demo > Build Living Room Avatar Scene
 
 To build to Quest 3, Unity Hub must have Android Build Support, Android SDK/NDK Tools, and OpenJDK installed for your Unity editor version.
 
-## Web Dashboard Deployment
+## Static Web Page Deployment
 
-Vercel and GitHub Pages deploy the React dashboard. They do not provide durable writable SQLite storage.
+Vercel and GitHub Pages deploy a static React project README. They do not provide durable writable SQLite storage, and the Web page is no longer the live dashboard.
 
 Use one of these modes:
 
-- Mock/static dashboard: deploy as-is.
-- Local live demo: run `apps/api` on your Mac and point local devices to `http://YOUR_MAC_IP:8787`.
+- Static project information: deploy `apps/web` as-is.
+- Local live demo: run `apps/api` on your Mac and point the iPhone app and Quest 3 to `http://YOUR_MAC_IP:8787`.
 - Public live demo: host the API separately with HTTPS, or migrate storage to a hosted SQLite-compatible service.
 
-Set `VITE_API_BASE_URL` to the reachable API URL when building the dashboard.
+The live chart and records are in the iPhone app, not the Web page.
 
 ## Data Contracts
 

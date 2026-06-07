@@ -53,7 +53,7 @@ SQLITE_PATH=/absolute/path/demo.sqlite npm run api:dev
 | --- | --- | --- |
 | id | string | UUID |
 | role | string | `user`, `avatar`, or `system` |
-| text | string | Dialogue text shown in VR and Web |
+| text | string | Dialogue text shown in VR and the iPhone app |
 | message_type | string | `user_speech`, `avatar_reply`, `sensor_prompt`, or `system` |
 | conversation_initiator | string | `user` or `avatar` |
 | heart_rate | number | BPM at the moment of the record, when available |

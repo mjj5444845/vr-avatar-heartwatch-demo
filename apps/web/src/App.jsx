@@ -1,255 +1,164 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Activity, Database, Headset, HeartPulse, Play, Square, Watch } from "lucide-react";
-import { createAvatarResponse, getHeartRateZone } from "./avatarEngine.js";
-import { createMockSample } from "./sensorMock.js";
+import React from "react";
+import { createRoot } from "react-dom/client";
+import { Apple, CheckCircle2, Database, Gamepad2, GitBranch, HeartPulse, PlayCircle, Smartphone, Watch } from "lucide-react";
 import "./styles.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+const setupSteps = [
+  "Run the SQLite API on the Mac.",
+  "Install the iPhone app and paired Watch app from Xcode.",
+  "Set the iPhone app API base URL to the Mac LAN address.",
+  "Start the Watch heart-rate workout stream.",
+  "Open the Unity Quest 3 scene and point it at the same API.",
+  "Use Quest controls to drive scripted dialogue and inspect records in the iPhone app."
+];
+
+const developerModeSteps = [
+  "Connect iPhone to the Mac and try running the app once from Xcode.",
+  "Open Settings > Privacy & Security > Developer Mode.",
+  "Turn Developer Mode on, restart, then confirm Developer Mode after reboot.",
+  "If the app is blocked, open Settings > General > VPN & Device Management and trust your developer account."
+];
+
+const endpoints = [
+  ["POST", "/api/samples", "Apple Watch heart-rate samples"],
+  ["GET", "/api/latest", "Unity VR current heart-rate panel"],
+  ["GET", "/api/samples", "iPhone chart and heart-rate history"],
+  ["GET", "/api/events", "Avatar zone messages and VR events"],
+  ["POST", "/api/chat/records", "Unity scripted conversation records"],
+  ["GET", "/api/chat", "iPhone conversation table"]
+];
 
 export default function App() {
-  const [samples, setSamples] = useState([]);
-  const [events, setEvents] = useState([]);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [streaming, setStreaming] = useState(false);
-  const latest = samples[0];
-  const latestZone = latest ? getHeartRateZone(latest.heartRate) : null;
-  const avatarMessage = latest ? createAvatarResponse(latest) : null;
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    if (!API_BASE_URL) return undefined;
-
-    const timer = window.setInterval(loadData, 2500);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!streaming) return undefined;
-
-    const push = async () => {
-      const sample = createMockSample();
-      setSamples((current) => [sample, ...current].slice(0, 80));
-      setEvents((current) => [createAvatarResponse(sample), ...current].slice(0, 80));
-
-      if (API_BASE_URL) {
-        await fetch(`${API_BASE_URL}/api/samples`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(sample)
-        });
-      }
-    };
-
-    push();
-    const timer = window.setInterval(push, 2200);
-    return () => window.clearInterval(timer);
-  }, [streaming]);
-
-  async function loadData() {
-    if (!API_BASE_URL) return;
-
-    const [sampleResponse, eventResponse, chatResponse] = await Promise.all([
-      fetch(`${API_BASE_URL}/api/samples`),
-      fetch(`${API_BASE_URL}/api/events`),
-      fetch(`${API_BASE_URL}/api/chat`)
-    ]);
-    setSamples(await sampleResponse.json());
-    setEvents(await eventResponse.json());
-    setChatMessages(await chatResponse.json());
-  }
-
-  async function logVrEvent() {
-    const event = {
-      id: crypto.randomUUID(),
-      type: "vr_focus",
-      text: "Quest 3 user focused on avatar and requested a check-in.",
-      timestamp: new Date().toISOString()
-    };
-
-    setEvents((current) => [event, ...current].slice(0, 80));
-    if (API_BASE_URL) {
-      await fetch(`${API_BASE_URL}/api/events`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(event)
-      });
-    }
-  }
-
-  const chartPath = useMemo(() => buildChartPath(samples), [samples]);
-
   return (
-    <main className="app">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">Unity Quest 3 + Apple Watch + SQLite</p>
-          <h1>VR avatar heart-rate dashboard</h1>
+    <main className="app-shell">
+      <section className="hero">
+        <div className="hero-copy">
+          <p className="eyebrow">Quest 3 + Apple Watch + iPhone + SQLite</p>
+          <h1>VR Avatar HeartWatch Demo</h1>
+          <p className="lead">
+            A lightweight demo where Apple Watch heart rate drives a scripted VR avatar, records data in SQLite,
+            and shows the live stream, chart, VR events, and conversation logs inside an installable iPhone app.
+          </p>
         </div>
-        <div className="actions">
-          <button className="primary" onClick={() => setStreaming((value) => !value)}>
-            {streaming ? <Square size={18} /> : <Play size={18} />}
-            {streaming ? "Stop mock" : "Start mock"}
-          </button>
-          <button onClick={logVrEvent}>
-            <Headset size={18} />
-            VR event
-          </button>
-          <button onClick={loadData}>
-            <Database size={18} />
-            Sync API
-          </button>
+        <div className="system-card" aria-label="System architecture">
+          <FlowItem icon={<Watch />} label="Apple Watch" detail="HealthKit live heart rate" />
+          <FlowItem icon={<Smartphone />} label="iPhone App" detail="Bridge, chart, records" />
+          <FlowItem icon={<Database />} label="SQLite API" detail="Local durable demo data" />
+          <FlowItem icon={<Gamepad2 />} label="Quest 3 VR" detail="Avatar scene and panels" />
         </div>
-      </header>
-
-      <section className="system-grid">
-        <StatusCard icon={<Watch />} label="Sensor" value={API_BASE_URL ? "Apple Watch/API ready" : "Mock mode"} />
-        <StatusCard icon={<Headset />} label="VR" value="Unity Quest 3" />
-        <StatusCard icon={<Database />} label="Database" value={API_BASE_URL ? "SQLite API" : "Local preview"} />
       </section>
 
-      <section className="hero-grid">
-        <article className="avatar-stage" style={{ "--zone": latestZone?.color || "#5f7cff" }}>
-          <div className="avatar">
-            <div className="avatar-aura" />
-            <div className="avatar-head" />
-            <div className="avatar-body" />
-          </div>
-          <div className="speech">
-            <strong>Avatar</strong>
-            <p>{avatarMessage?.text || "Waiting for Apple Watch heart-rate data."}</p>
-          </div>
-        </article>
+      <section className="content-grid">
+        <InfoPanel title="Current Scope" icon={<GitBranch />}>
+          <ul className="clean-list">
+            <li><strong>VR:</strong> Unity Quest 3 scene with Robot Kyle, heart-rate panel, dialogue panel, and scripted controls.</li>
+            <li><strong>Sensor:</strong> Apple Watch HealthKit workout stream sent through WatchConnectivity.</li>
+            <li><strong>Application:</strong> iPhone SwiftUI app for Watch bridge, live chart, records, events, and conversations.</li>
+            <li><strong>Database:</strong> Express API with SQLite tables for samples, avatar messages, VR events, and chat messages.</li>
+          </ul>
+        </InfoPanel>
 
-        <aside className="live-panel">
-          <span className="status">{streaming ? "Streaming mock heart rate" : "Waiting for live data"}</span>
-          <div className="metric">
-            <HeartPulse size={32} />
-            <span>{latest?.heartRate || "--"}</span>
-            <small>bpm</small>
-          </div>
-          <p>{latestZone ? `${latestZone.name} zone · ${latestZone.tone}` : "No current sample"}</p>
-          <svg className="chart" viewBox="0 0 520 180" role="img" aria-label="Heart-rate chart">
-            <line x1="0" x2="520" y1="96" y2="96" />
-            <path d={chartPath} />
-          </svg>
-        </aside>
+        <InfoPanel title="Start The Demo" icon={<PlayCircle />}>
+          <ol className="step-list">
+            {setupSteps.map((step) => <li key={step}>{step}</li>)}
+          </ol>
+        </InfoPanel>
       </section>
 
-      <section className="dashboard-grid">
-        <article>
-          <h2>Heart-rate records</h2>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Heart rate</th>
-                  <th>Zone</th>
-                  <th>Source</th>
-                </tr>
-              </thead>
-              <tbody>
-                {samples.slice(0, 20).map((sample) => {
-                  const zone = getHeartRateZone(sample.heartRate);
-                  return (
-                    <tr key={sample.id}>
-                      <td>{formatTime(sample.timestamp)}</td>
-                      <td>{sample.heartRate} bpm</td>
-                      <td>{zone.name}</td>
-                      <td>{sample.source}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </article>
+      <section className="docs-section">
+        <InfoPanel title="Mac API" icon={<Database />}>
+          <p>Install dependencies and start the local SQLite API:</p>
+          <CodeBlock code={"npm install\nnpm run api:dev"} />
+          <p>For iPhone and Quest 3, use the Mac LAN address, not localhost:</p>
+          <CodeBlock code={"http://YOUR_MAC_IP:8787"} />
+        </InfoPanel>
 
-        <article>
-          <h2>Avatar and VR events</h2>
-          <div className="event-feed">
-            {events.slice(0, 20).map((event) => (
-              <div className="event-item" key={event.id}>
-                <Activity size={18} />
-                <div>
-                  <strong>{event.text}</strong>
-                  <span>{formatTime(event.timestamp)}{event.zone ? ` · ${event.zone}` : ""}</span>
-                </div>
+        <InfoPanel title="Install On iPhone" icon={<Apple />}>
+          <ol className="step-list">
+            <li>Open Xcode and create an iOS app with a watchOS companion app.</li>
+            <li>Add the iPhone Swift files from <code>sensor/apple-watch</code> to the iOS target.</li>
+            <li>Add the Watch Swift files from <code>sensor/apple-watch</code> to the Watch target.</li>
+            <li>Enable HealthKit on Watch and WatchConnectivity on both targets.</li>
+            <li>Select your iPhone as the run destination and press Run.</li>
+            <li>If prompted, trust the developer app on iPhone in Settings.</li>
+          </ol>
+        </InfoPanel>
+      </section>
+
+      <section className="docs-section">
+        <InfoPanel title="Developer Mode" icon={<Smartphone />}>
+          <ol className="step-list">
+            {developerModeSteps.map((step) => <li key={step}>{step}</li>)}
+          </ol>
+        </InfoPanel>
+
+        <InfoPanel title="Assemble Targets" icon={<GitBranch />}>
+          <ul className="clean-list">
+            <li>iPhone target: bridge app, bridge view, WatchConnectivity bridge, models, and API client.</li>
+            <li>Watch target: Watch app, Watch view, and HealthKit heart-rate manager.</li>
+            <li>Enable HealthKit on Watch and WatchConnectivity on both targets.</li>
+            <li>Use iOS 16 or newer because the iPhone app uses Swift Charts.</li>
+          </ul>
+        </InfoPanel>
+      </section>
+
+      <section className="docs-section">
+        <InfoPanel title="API Contract" icon={<HeartPulse />}>
+          <div className="endpoint-list">
+            {endpoints.map(([method, path, description]) => (
+              <div className="endpoint" key={path}>
+                <span>{method}</span>
+                <code>{path}</code>
+                <p>{description}</p>
               </div>
             ))}
           </div>
-        </article>
-      </section>
+        </InfoPanel>
 
-      <section className="conversation-section">
-        <article>
-          <h2>Conversation records</h2>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Role</th>
-                  <th>Text type</th>
-                  <th>Initiator</th>
-                  <th>Heart rate</th>
-                  <th>Text</th>
-                </tr>
-              </thead>
-              <tbody>
-                {chatMessages.slice(0, 30).map((message) => (
-                  <tr key={message.id}>
-                    <td>{formatTime(message.timestamp)}</td>
-                    <td>{message.role}</td>
-                    <td>{formatLabel(message.messageType)}</td>
-                    <td>{formatLabel(message.conversationInitiator)}</td>
-                    <td>{message.heartRate ? `${message.heartRate} bpm` : "--"}</td>
-                    <td>{message.text}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
+        <InfoPanel title="Test Checklist" icon={<CheckCircle2 />}>
+          <ul className="clean-list">
+            <li><code>GET /api/health</code> returns <code>{"{ ok: true }"}</code>.</li>
+            <li>Watch app shows a current bpm value after Start and Health permission approval.</li>
+            <li>iPhone app shows "Posted to API" and updates the chart after Sync.</li>
+            <li>Unity heart-rate panel updates from <code>/api/latest</code>.</li>
+            <li>Unity X/Y/A dialogue controls create rows visible in the iPhone app conversation view.</li>
+          </ul>
+        </InfoPanel>
       </section>
     </main>
   );
 }
 
-function StatusCard({ icon, label, value }) {
+function FlowItem({ icon, label, detail }) {
   return (
-    <article className="status-card">
+    <div className="flow-item">
       {icon}
       <div>
-        <span>{label}</span>
-        <strong>{value}</strong>
+        <strong>{label}</strong>
+        <span>{detail}</span>
       </div>
+    </div>
+  );
+}
+
+function InfoPanel({ title, icon, children }) {
+  return (
+    <article className="info-panel">
+      <header>
+        {icon}
+        <h2>{title}</h2>
+      </header>
+      {children}
     </article>
   );
 }
 
-function buildChartPath(samples) {
-  const points = samples.slice(0, 32).reverse();
-  if (points.length < 2) return "";
-
-  return points.map((sample, index) => {
-    const x = (index / (points.length - 1)) * 520;
-    const y = 180 - ((sample.heartRate - 50) / 100) * 180;
-    return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${Math.max(12, Math.min(168, y)).toFixed(1)}`;
-  }).join(" ");
+function CodeBlock({ code }) {
+  return <pre><code>{code}</code></pre>;
 }
 
-function formatTime(value) {
-  return new Intl.DateTimeFormat(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  }).format(new Date(value));
-}
-
-function formatLabel(value) {
-  return String(value || "unknown").replaceAll("_", " ");
-}
+createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

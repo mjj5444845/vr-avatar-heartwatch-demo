@@ -1,6 +1,6 @@
-# Apple Watch Heart-rate Bridge
+# Apple Watch + iPhone Application
 
-This folder contains starter Swift code for the real sensor path.
+This folder contains Swift code for the real sensor path and the iPhone application interface.
 
 ## What You Need
 
@@ -15,7 +15,8 @@ This folder contains starter Swift code for the real sensor path.
 2. HealthKit emits live heart-rate samples.
 3. The watch sends each sample to the iPhone app using WatchConnectivity.
 4. The iPhone app posts the sample to `POST /api/samples`.
-5. React dashboard and Unity Quest 3 read the SQLite API.
+5. The iPhone app reads the SQLite API for chart data, VR events, and conversation records.
+6. Unity Quest 3 reads the same SQLite API for the current heart-rate panel.
 
 ## API Payload
 
@@ -36,11 +37,12 @@ npm run api:dev
 ```
 
 2. Find your Mac LAN IP, for example `192.168.1.20`.
-3. In the iPhone companion app, set the API URL to `http://192.168.1.20:8787/api/samples`.
-4. Build the watchOS app from Xcode to your Apple Watch.
-5. Open the watch app and tap **Start**.
-6. Accept Health permissions.
-7. Open the React dashboard and click **Sync API**.
+3. In the iPhone app, set the API base URL to `http://192.168.1.20:8787`.
+4. Build the iPhone app from Xcode to your iPhone.
+5. Build the watchOS app from Xcode to your Apple Watch if it did not install automatically.
+6. Open the Watch app and tap **Start**.
+7. Accept Health permissions.
+8. Open the iPhone app and tap **Sync** to see chart data and records.
 
 The watch app needs a workout session for reliable live heart-rate updates.
 
@@ -58,9 +60,11 @@ iPhone target
 iPhoneHeartRateBridgeApp.swift
 iPhoneHeartRateBridgeView.swift
 iPhoneWatchConnectivityBridge.swift
+HeartWatchModels.swift
+HeartWatchAPIClient.swift
 ```
 
-The Watch target owns HealthKit and sends samples to the phone. The iPhone target owns the API URL and posts to SQLite through `POST /api/samples`.
+The Watch target owns HealthKit and sends samples to the phone. The iPhone target owns the API base URL, posts to SQLite through `POST /api/samples`, and reads `/api/latest`, `/api/samples`, `/api/events`, and `/api/chat`.
 
 Do not put both app entry files in one target, because both `WatchHeartRateApp.swift` and `iPhoneHeartRateBridgeApp.swift` contain `@main`.
 
@@ -70,10 +74,12 @@ Do not put both app entry files in one target, because both `WatchHeartRateApp.s
 - Watch target: Workout Processing if available.
 - Watch and iPhone targets: WatchConnectivity.
 
-For local HTTP testing, set the API URL in the iPhone app to your Mac LAN IP, not `127.0.0.1`. Example:
+For local HTTP testing, set the API base URL in the iPhone app to your Mac LAN IP, not `127.0.0.1`. Example:
 
 ```text
-http://192.168.1.20:8787/api/samples
+http://192.168.1.20:8787
 ```
 
 Use HTTPS for a hosted or public demo.
+
+For full iPhone installation steps, Developer Mode, signing, and test flow, see `docs/ios-application.md`.

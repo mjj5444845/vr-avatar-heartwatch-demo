@@ -8,14 +8,20 @@ final class iPhoneWatchConnectivityBridge: NSObject, ObservableObject, WCSession
     @Published var lastPostedHeartRate: Int?
     @Published var lastStatus = "Not connected"
 
-    var apiURL: URL {
+    var apiBaseURL: URL {
         get {
-            let stored = UserDefaults.standard.string(forKey: "HeartRateApiURL") ?? "http://127.0.0.1:8787/api/samples"
+            let stored = UserDefaults.standard.string(forKey: "HeartRateApiBaseURL")
+                ?? UserDefaults.standard.string(forKey: "HeartRateApiURL")?.replacingOccurrences(of: "/api/samples", with: "")
+                ?? "http://127.0.0.1:8787"
             return URL(string: stored)!
         }
         set {
-            UserDefaults.standard.set(newValue.absoluteString, forKey: "HeartRateApiURL")
+            UserDefaults.standard.set(newValue.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/")), forKey: "HeartRateApiBaseURL")
         }
+    }
+
+    var sampleURL: URL {
+        URL(string: "/api/samples", relativeTo: apiBaseURL)!.absoluteURL
     }
 
     func start() {
@@ -41,7 +47,7 @@ final class iPhoneWatchConnectivityBridge: NSObject, ObservableObject, WCSession
     }
 
     private func postSample(_ message: [String: Any]) async {
-        var request = URLRequest(url: apiURL)
+        var request = URLRequest(url: sampleURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 

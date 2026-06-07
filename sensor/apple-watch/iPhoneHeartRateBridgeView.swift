@@ -1,31 +1,184 @@
+import Charts
 import SwiftUI
 
 struct iPhoneHeartRateBridgeView: View {
     @EnvironmentObject private var bridge: iPhoneWatchConnectivityBridge
-    @State private var apiURLText = UserDefaults.standard.string(forKey: "HeartRateApiURL") ?? "http://127.0.0.1:8787/api/samples"
+    @State private var apiURLText = UserDefaults.standard.string(forKey: "HeartRateApiBaseURL")
+        ?? UserDefaults.standard.string(forKey: "HeartRateApiURL")?.replacingOccurrences(of: "/api/samples", with: "")
+        ?? "http://127.0.0.1:8787"
+    @State private var dashboard = HeartWatchDashboardData()
+    @State private var syncStatus = "Waiting to sync"
+    @State private var isSyncing = false
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("SQLite API") {
-                    TextField("API URL", text: $apiURLText)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-
-                    Button("Save API URL") {
-                        if let url = URL(string: apiURLText) {
-                            bridge.apiURL = url
-                            bridge.lastStatus = "API URL saved"
-                        }
+            List {
+                configurationSection
+                liveHeartRateSection
+                chartSection
+                recordsSection
+                eventsSection
+                conversationSection
+            }
+            .navigationTitle("HeartWatch")
+            .toolbar {
+                Button("Sync") {
+                    Task {
+                        await syncDashboard()
                     }
                 }
-
-                Section("Live status") {
-                    LabeledContent("Last heart rate", value: bridge.lastPostedHeartRate.map { "\($0) bpm" } ?? "--")
-                    Text(bridge.lastStatus)
-                }
             }
-            .navigationTitle("Heart Bridge")
+            .task {
+                await syncDashboard()
+            }
+            .refreshable {
+                await syncDashboard()
+            }
         }
     }
+
+    private var configurationSection: some View {
+        Section("SQLite API") {
+            TextField("API base URL", text: $apiURLText)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.URL)
+
+            Button("Save API URL") {
+                if let url = URL(string: apiURLText.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                    bridge.apiBaseURL = url
+                    bridge.lastStatus = "API base URL saved"
+                    Task {
+                        await syncDashboard()
+                    }
+                }
+            }
+
+            LabeledContent("Watch bridge", value: bridge.lastStatus)
+            LabeledContent("Dashboard", value: isSyncing ? "Syncing" : syncStatus)
+        }
+    }
+
+    private var liveHeartRateSection: some View {
+        Section("Live Heart Rate") {
+            HStack(alignment: .firstTextBaseline) {
+                Text("\(dashboard.latest?.heartRate ?? bridge.lastPostedHeartRate ?? 0)")
+                    .font(.system(size: 52, weight: .bold, design: .rounded))
+                Text("bpm")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+            }
+
+            LabeledContent("Zone", value: dashboard.latest?.zone?.name ?? "--")
+            LabeledContent("Source", value: dashboard.latest?.source ?? "Apple Watch bridge")
+            LabeledContent("Last posted", value: bridge.lastPostedHeartRate.map { "\($0) bpm" } ?? "--")
+        }
+    }
+
+    private var chartSection: some View {
+        Section("Heart-rate Chart") {
+            if dashboard.samples.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Image(systemName: "heart.text.square")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    Text("No samples yet")
+                        .font(.headline)
+                    Text("Start the Watch app, then sync this screen.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 12)
+            } else {
+                Chart(chartSamples) { sample in
+                    LineMark(
+                        x: .value("Sample", sample.index),
+                        y: .value("Heart rate", sample.heartRate)
+                    )
+                    PointMark(
+                        x: .value("Sample", sample.index),
+                        y: .value("Heart rate", sample.heartRate)
+                    )
+                }
+                .frame(height: 220)
+                .chartYScale(domain: 45...150)
+            }
+        }
+    }
+
+    private var recordsSection: some View {
+        Section("Heart-rate Records") {
+            ForEach(dashboard.samples.prefix(12)) { sample in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(sample.heartRate) bpm")
+                        .font(.headline)
+                    Text("\(sample.source) · \(sample.timestamp)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private var eventsSection: some View {
+        Section("Avatar and VR Events") {
+            ForEach(dashboard.events.prefix(12)) { event in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(event.text)
+                        .font(.subheadline)
+                    Text([event.type, event.zone, event.timestamp].compactMap { $0 }.joined(separator: " · "))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private var conversationSection: some View {
+        Section("Conversation Records") {
+            ForEach(dashboard.chatMessages.prefix(16)) { message in
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(message.text)
+                        .font(.subheadline)
+                    Text("\(message.role) · \(message.messageType) · \(message.conversationInitiator)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    if let heartRate = message.heartRate {
+                        Text("\(heartRate) bpm · \(message.zone ?? "unknown")")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+
+    private var chartSamples: [ChartSample] {
+        Array(dashboard.samples.prefix(32).reversed().enumerated()).map { index, sample in
+            ChartSample(id: sample.id, index: index, heartRate: sample.heartRate)
+        }
+    }
+
+    private func syncDashboard() async {
+        guard let baseURL = URL(string: apiURLText.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            syncStatus = "Invalid API URL"
+            return
+        }
+
+        isSyncing = true
+        defer { isSyncing = false }
+
+        do {
+            dashboard = try await HeartWatchAPIClient(baseURL: baseURL).fetchDashboardData()
+            syncStatus = "Synced \(dashboard.samples.count) samples"
+        } catch {
+            syncStatus = "Sync failed: \(error.localizedDescription)"
+        }
+    }
+}
+
+private struct ChartSample: Identifiable {
+    let id: String
+    let index: Int
+    let heartRate: Int
 }
