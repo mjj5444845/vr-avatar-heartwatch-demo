@@ -43,7 +43,8 @@ npm run api:dev
 6. Open the HeartWatch iPhone app.
 7. Tap **Allow Health Access** and approve heart-rate read permission.
 8. Tap **Read Latest Health Sample**.
-9. Tap **Sync** to see chart data and records.
+9. Tap **Start 3s Live Polling** to keep checking HealthKit for newer synced samples.
+10. Tap **Sync** to see chart data and records.
 
 No watchOS app is required in this default demo path.
 

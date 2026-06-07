@@ -38,8 +38,11 @@ npm run api:dev
 6. Open the HeartWatch iPhone app.
 7. Tap **Allow Health Access** and approve heart-rate read access.
 8. Tap **Read Latest Health Sample**.
-9. Tap **Sync**. The chart, events, and conversations should refresh.
-10. In Unity, set `HeartRateReceiver.apiBaseUrl` to `http://YOUR_MAC_IP:8787` and play or build the scene.
+9. Tap **Start 3s Live Polling** for a dynamic demo.
+10. Tap **Sync**. The chart, events, and conversations should refresh.
+11. In Unity, set `HeartRateReceiver.apiBaseUrl` to `http://YOUR_MAC_IP:8787` and play or build the scene.
+
+The 3-second poller reads iPhone Health, not the Apple Watch sensor directly. It updates SQLite whenever iPhone Health receives a newer Apple Watch sample.
 
 ## Xcode Target Setup
 
@@ -73,10 +76,11 @@ The older watchOS files are kept in `sensor/apple-watch` only as fallback refere
 2. Set the iPhone app API base URL to `http://YOUR_MAC_IP:8787`.
 3. Tap **Allow Health Access**.
 4. Tap **Read Latest Health Sample**.
-5. Check `http://YOUR_MAC_IP:8787/api/latest`; it should return the newest posted Health sample.
-6. Open the Unity scene; the heart-rate panel reads `/api/latest`.
-7. Open the iPhone app; the chart reads `/api/samples`, events read `/api/events`, and conversations read `/api/chat`.
-8. Advance scripted VR dialogue; `/api/chat/records` stores message type and initiator for iPhone display.
+5. Tap **Start 3s Live Polling**.
+6. Check `http://YOUR_MAC_IP:8787/api/latest`; it should return the newest posted Health sample.
+7. Open the Unity scene; the heart-rate panel reads `/api/latest`.
+8. Open the iPhone app; the chart reads `/api/samples`, events read `/api/events`, and conversations read `/api/chat`.
+9. Advance scripted VR dialogue; `/api/chat/records` stores message type and initiator for iPhone display.
 
 ## Privacy Notes
 

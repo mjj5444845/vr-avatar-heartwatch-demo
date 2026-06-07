@@ -99,11 +99,27 @@ struct iPhoneHeartRateBridgeView: View {
             LabeledContent("Last posted", value: healthReader.lastPostedHeartRate.map { "\($0) bpm" } ?? "--")
             LabeledContent("Health sample", value: healthReader.lastSampleDate.map { $0.formatted(date: .abbreviated, time: .standard) } ?? "--")
             LabeledContent("Imported", value: "\(healthReader.importedCount)")
+            LabeledContent("Polling", value: healthReader.isPolling ? "On · tick \(healthReader.pollTickCount)" : "Off")
 
             Button("Allow Health Access") {
                 Task {
                     await healthReader.requestAuthorization()
                 }
+            }
+
+            if healthReader.isPolling {
+                Button("Stop Live Polling") {
+                    healthReader.stopPolling()
+                }
+                .buttonStyle(.bordered)
+            } else {
+                Button("Start 3s Live Polling") {
+                    healthReader.startPolling(every: 3) {
+                        await checkAPI()
+                        await syncDashboard()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
             }
 
             Button("Read Latest Health Sample") {

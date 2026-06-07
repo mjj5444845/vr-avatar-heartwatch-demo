@@ -155,7 +155,9 @@ This version does not install anything on Apple Watch. The watch records heart-r
 6. Tap **Read Latest Health Sample**.
 7. Tap **Sync** to refresh the chart and records from SQLite.
 
-This path is not as live as a watchOS workout app. It is the lightest reliable demo path because it avoids Apple Watch developer deployment entirely.
+For a dynamic demo, tap **Start 3s Live Polling**. The iPhone app will check HealthKit every 3 seconds and post a new row to SQLite whenever the latest Health sample has a new timestamp.
+
+This path is not as live as a watchOS workout app. It is the lightest reliable demo path because it avoids Apple Watch developer deployment entirely. If Apple Watch has not synced a newer sample into iPhone Health yet, the poller will keep showing the previous bpm and status `Polling: no newer Health sample`.
 
 ## Connect Unity Quest 3
 

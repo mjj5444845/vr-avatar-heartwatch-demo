@@ -9,9 +9,13 @@ final class iPhoneHealthKitHeartRateReader: ObservableObject {
     @Published var lastReadHeartRate: Int?
     @Published var lastSampleDate: Date?
     @Published var importedCount = 0
+    @Published var isPolling = false
+    @Published var pollTickCount = 0
     @Published var lastStatus = "Health access not requested"
 
     private let healthStore = HKHealthStore()
+    private var pollingTask: Task<Void, Never>?
+    private var lastPostedSampleKey: String?
 
     var apiBaseURL: URL {
         get {
@@ -45,7 +49,30 @@ final class iPhoneHealthKitHeartRateReader: ObservableObject {
             return
         }
 
-        await postSample(heartRate: sample.heartRate, timestamp: sample.timestamp)
+        _ = await postSample(heartRate: sample.heartRate, timestamp: sample.timestamp)
+    }
+
+    func startPolling(every seconds: UInt64 = 3, onTick: @escaping @MainActor () async -> Void = {}) {
+        guard !isPolling else {
+            return
+        }
+
+        isPolling = true
+        lastStatus = "Live polling every \(seconds)s"
+        pollingTask = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.pollLatestSampleOnce()
+                await onTick()
+                try? await Task.sleep(nanoseconds: seconds * 1_000_000_000)
+            }
+        }
+    }
+
+    func stopPolling() {
+        pollingTask?.cancel()
+        pollingTask = nil
+        isPolling = false
+        lastStatus = "Live polling stopped"
     }
 
     func importRecentSamples(limit: Int = 30) async {
@@ -63,6 +90,24 @@ final class iPhoneHealthKitHeartRateReader: ObservableObject {
 
         importedCount = posted
         lastStatus = posted > 0 ? "Imported \(posted) Health samples" : "No samples posted"
+    }
+
+    private func pollLatestSampleOnce() async {
+        pollTickCount += 1
+        guard let sample = await fetchRecentHeartRateSamples(limit: 1).first else {
+            return
+        }
+
+        let sampleKey = "\(Int(sample.timestamp.timeIntervalSince1970))-\(sample.heartRate)"
+        guard sampleKey != lastPostedSampleKey else {
+            lastStatus = "Polling: no newer Health sample"
+            return
+        }
+
+        if await postSample(heartRate: sample.heartRate, timestamp: sample.timestamp) {
+            lastPostedSampleKey = sampleKey
+            importedCount += 1
+        }
     }
 
     private func fetchRecentHeartRateSamples(limit: Int) async -> [(heartRate: Int, timestamp: Date)] {
