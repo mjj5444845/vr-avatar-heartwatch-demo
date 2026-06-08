@@ -102,6 +102,7 @@ docs                     # Demo, deployment, and test docs
 ## Detailed Docs
 
 - Full demo flow: `docs/demo-application.md`
+- Windows release guide: `docs/windows-release.md`
 - Short startup checklist: `docs/startup-test.md`
 - iPhone/Watch installation: `docs/ios-application.md`
 - Database schema: `docs/database-schema.md`
