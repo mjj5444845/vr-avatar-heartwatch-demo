@@ -28,7 +28,7 @@ final class WatchHeartRateManager: NSObject, ObservableObject, HKWorkoutSessionD
             return
         }
 
-        healthStore.requestAuthorization(toShare: [], read: [heartRateType]) { success, error in
+        healthStore.requestAuthorization(toShare: [HKObjectType.workoutType()], read: [heartRateType]) { success, error in
             DispatchQueue.main.async {
                 if let error {
                     self.status = "Health permission error: \(error.localizedDescription)"

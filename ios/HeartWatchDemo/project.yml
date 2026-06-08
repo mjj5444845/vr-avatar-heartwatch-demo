@@ -59,6 +59,7 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: HeartWatch
         INFOPLIST_KEY_NSHealthShareUsageDescription: This demo reads heart rate to drive a VR avatar.
+        INFOPLIST_KEY_NSHealthUpdateUsageDescription: This demo starts a temporary workout session so Apple Watch can stream live heart rate.
         INFOPLIST_KEY_WKApplication: YES
         INFOPLIST_KEY_WKCompanionAppBundleIdentifier: com.jeffrey.HeartWatchDemo
         INFOPLIST_KEY_WKBackgroundModes: workout-processing
