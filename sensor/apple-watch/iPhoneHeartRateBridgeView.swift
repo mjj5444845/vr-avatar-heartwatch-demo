@@ -2,7 +2,7 @@ import Charts
 import SwiftUI
 
 struct iPhoneHeartRateBridgeView: View {
-    @EnvironmentObject private var healthReader: iPhoneHealthKitHeartRateReader
+    @EnvironmentObject private var bridge: iPhoneWatchConnectivityBridge
     @State private var apiURLText = UserDefaults.standard.string(forKey: "HeartRateApiBaseURL")
         ?? UserDefaults.standard.string(forKey: "HeartRateApiURL")?.replacingOccurrences(of: "/api/samples", with: "")
         ?? "http://192.168.1.174:8787"
@@ -31,7 +31,7 @@ struct iPhoneHeartRateBridgeView: View {
                 }
             }
             .task {
-                healthReader.apiBaseURL = URL(string: apiURLText) ?? healthReader.apiBaseURL
+                bridge.apiBaseURL = URL(string: apiURLText) ?? bridge.apiBaseURL
                 await checkAPI()
                 await syncDashboard()
             }
@@ -50,8 +50,8 @@ struct iPhoneHeartRateBridgeView: View {
 
             Button("Save API URL") {
                 if let url = URL(string: apiURLText.trimmingCharacters(in: .whitespacesAndNewlines)) {
-                    healthReader.apiBaseURL = url
-                    healthReader.lastStatus = "API base URL saved"
+                    bridge.apiBaseURL = url
+                    bridge.lastStatus = "API base URL saved"
                     Task {
                         await checkAPI()
                         await syncDashboard()
@@ -61,7 +61,7 @@ struct iPhoneHeartRateBridgeView: View {
 
             Button("Use Demo Mac URL") {
                 apiURLText = "http://192.168.1.174:8787"
-                healthReader.apiBaseURL = URL(string: apiURLText)!
+                bridge.apiBaseURL = URL(string: apiURLText)!
                 Task {
                     await checkAPI()
                     await syncDashboard()
@@ -78,7 +78,7 @@ struct iPhoneHeartRateBridgeView: View {
             .buttonStyle(.borderedProminent)
 
             LabeledContent("API", value: apiStatus)
-            LabeledContent("Health reader", value: healthReader.lastStatus)
+            LabeledContent("Watch bridge", value: bridge.lastStatus)
             LabeledContent("Dashboard", value: isSyncing ? "Syncing" : syncStatus)
         }
     }
@@ -86,7 +86,7 @@ struct iPhoneHeartRateBridgeView: View {
     private var liveHeartRateSection: some View {
         Section("Live Heart Rate") {
             HStack(alignment: .firstTextBaseline) {
-                Text("\(dashboard.latest?.heartRate ?? healthReader.lastPostedHeartRate ?? healthReader.lastReadHeartRate ?? 0)")
+                Text("\(dashboard.latest?.heartRate ?? bridge.lastPostedHeartRate ?? 0)")
                     .font(.system(size: 52, weight: .bold, design: .rounded))
                 Text("bpm")
                     .font(.headline)
@@ -94,46 +94,11 @@ struct iPhoneHeartRateBridgeView: View {
             }
 
             LabeledContent("Zone", value: dashboard.latest?.zone?.name ?? "--")
-            LabeledContent("Source", value: dashboard.latest?.source ?? "iPhone Health")
-            LabeledContent("Latest Health read", value: healthReader.lastReadHeartRate.map { "\($0) bpm" } ?? "--")
-            LabeledContent("Last posted", value: healthReader.lastPostedHeartRate.map { "\($0) bpm" } ?? "--")
-            LabeledContent("Health sample", value: healthReader.lastSampleDate.map { $0.formatted(date: .abbreviated, time: .standard) } ?? "--")
-            LabeledContent("Imported", value: "\(healthReader.importedCount)")
-            LabeledContent("Polling", value: healthReader.isPolling ? "On · tick \(healthReader.pollTickCount)" : "Off")
+            LabeledContent("Source", value: dashboard.latest?.source ?? "Apple Watch live")
+            LabeledContent("Last watch post", value: bridge.lastPostedHeartRate.map { "\($0) bpm" } ?? "--")
 
-            Button("Allow Health Access") {
+            Button("Refresh SQLite Records") {
                 Task {
-                    await healthReader.requestAuthorization()
-                }
-            }
-
-            if healthReader.isPolling {
-                Button("Stop Live Polling") {
-                    healthReader.stopPolling()
-                }
-                .buttonStyle(.bordered)
-            } else {
-                Button("Start 3s Live Polling") {
-                    healthReader.startPolling(every: 3) {
-                        await checkAPI()
-                        await syncDashboard()
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-            }
-
-            Button("Read Latest Health Sample") {
-                Task {
-                    await healthReader.fetchLatestAndPost()
-                    await checkAPI()
-                    await syncDashboard()
-                }
-            }
-            .buttonStyle(.borderedProminent)
-
-            Button("Import Recent Health Samples") {
-                Task {
-                    await healthReader.importRecentSamples(limit: 30)
                     await checkAPI()
                     await syncDashboard()
                 }
@@ -174,7 +139,7 @@ struct iPhoneHeartRateBridgeView: View {
                         .foregroundStyle(.secondary)
                     Text("No samples yet")
                         .font(.headline)
-                    Text("Allow Health access, read the latest sample, then sync this screen.")
+                    Text("Open the Watch app, tap Start, then keep this iPhone app open.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

@@ -14,20 +14,6 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C6CD735AB7684FD8D8F61BC6"
-               BuildableName = "HeartWatchDemo.app"
-               BlueprintName = "HeartWatchDemo"
-               ReferencedContainer = "container:HeartWatchDemo.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
                BlueprintIdentifier = "85ACDB3D4F6921B4B01BDDD1"
                BuildableName = "HeartWatch.app"
                BlueprintName = "HeartWatchDemoWatchApp"
@@ -44,9 +30,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C6CD735AB7684FD8D8F61BC6"
-            BuildableName = "HeartWatchDemo.app"
-            BlueprintName = "HeartWatchDemo"
+            BlueprintIdentifier = "85ACDB3D4F6921B4B01BDDD1"
+            BuildableName = "HeartWatch.app"
+            BlueprintName = "HeartWatchDemoWatchApp"
             ReferencedContainer = "container:HeartWatchDemo.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -67,9 +53,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C6CD735AB7684FD8D8F61BC6"
-            BuildableName = "HeartWatchDemo.app"
-            BlueprintName = "HeartWatchDemo"
+            BlueprintIdentifier = "85ACDB3D4F6921B4B01BDDD1"
+            BuildableName = "HeartWatch.app"
+            BlueprintName = "HeartWatchDemoWatchApp"
             ReferencedContainer = "container:HeartWatchDemo.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -84,9 +70,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C6CD735AB7684FD8D8F61BC6"
-            BuildableName = "HeartWatchDemo.app"
-            BlueprintName = "HeartWatchDemo"
+            BlueprintIdentifier = "85ACDB3D4F6921B4B01BDDD1"
+            BuildableName = "HeartWatch.app"
+            BlueprintName = "HeartWatchDemoWatchApp"
             ReferencedContainer = "container:HeartWatchDemo.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

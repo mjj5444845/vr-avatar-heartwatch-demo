@@ -24,7 +24,7 @@ Local SQLite works through `apps/api`. Vercel and GitHub Pages do not provide a 
 For this demo, the simplest reliable live setup is:
 
 1. Run `npm run api:dev` on your Mac.
-2. Run the iPhone app on the same Wi-Fi and allow Health heart-rate access.
+2. Run the iPhone app on the same Wi-Fi and set its API base URL to your Mac LAN URL.
 3. Point Unity Quest 3 and the iPhone app at `http://YOUR_MAC_IP:8787`.
-4. Tap **Read Latest Health Sample** in the iPhone app when you want to post the newest synced Apple Watch heart-rate record.
+4. Open HeartWatch on Apple Watch, tap **Start**, and keep the iPhone app open so live samples post into SQLite.
 5. Use Vercel/GitHub Pages only for static project documentation.
