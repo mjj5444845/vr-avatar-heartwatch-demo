@@ -6,6 +6,8 @@ final class iPhoneWatchConnectivityBridge: NSObject, ObservableObject, WCSession
     static let shared = iPhoneWatchConnectivityBridge()
 
     @Published var lastPostedHeartRate: Int?
+    @Published var lastReceivedHeartRate: Int?
+    @Published var lastReceivedAt: String?
     @Published var lastStatus = "Not connected"
     @Published var isPostingEnabled = false
 
@@ -48,6 +50,14 @@ final class iPhoneWatchConnectivityBridge: NSObject, ObservableObject, WCSession
     }
 
     private func postSample(_ message: [String: Any]) async {
+        let receivedHeartRate = message["heartRate"] as? Int
+        let receivedAt = message["timestamp"] as? String ?? ISO8601DateFormatter().string(from: Date())
+        await MainActor.run {
+            self.lastReceivedHeartRate = receivedHeartRate
+            self.lastReceivedAt = receivedAt
+            self.lastStatus = receivedHeartRate.map { "Watch sample received: \($0) bpm" } ?? "Watch message received"
+        }
+
         do {
             let status = try await HeartWatchAPIClient(baseURL: apiBaseURL).fetchDemoStatus()
             await MainActor.run {
@@ -55,7 +65,7 @@ final class iPhoneWatchConnectivityBridge: NSObject, ObservableObject, WCSession
             }
             guard status.isRunning else {
                 await MainActor.run {
-                    self.lastStatus = "Demo stopped: samples paused"
+                    self.lastStatus = "Watch received; VR demo not started"
                 }
                 return
             }

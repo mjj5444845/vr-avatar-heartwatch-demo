@@ -170,6 +170,11 @@ try {
   Write-Host "1. Open Safari on iPhone."
   Write-Host "2. Visit http://$PrimaryIp`:$Port/api/health"
   Write-Host "3. It should show JSON with ok=true. If Safari cannot open it, Windows Firewall or Wi-Fi isolation is blocking the phone."
+  Write-Host ""
+  Write-Host "HeartWatch iPhone app connection value:"
+  Write-Host "  http://$PrimaryIp`:$Port"
+  Write-Host "Enter the base URL above in Settings. Do not include /api/health or /api/samples."
+  Write-Host "USB cable connection does not replace Wi-Fi access; the iPhone app must reach this Windows IP over the network."
 
   $WindowsExe = Join-Path $RootDir "release\Windows\VRAvatarHeartWatch.exe"
   if (Test-Path $WindowsExe) {

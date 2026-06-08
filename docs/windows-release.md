@@ -92,6 +92,8 @@ Use these logs during a presentation:
 6. Re-run PowerShell as Administrator and start the demo again. The script will try to create an inbound firewall rule for TCP port `8787`.
 7. If the firewall prompt appears for Node.js or npm, allow access on Private networks.
 
+For the full step-by-step diagnosis path, use `docs/windows-pipeline-troubleshooting.md`.
+
 ## Demo Flow
 
 1. Run `scripts/start-demo-windows.ps1`.

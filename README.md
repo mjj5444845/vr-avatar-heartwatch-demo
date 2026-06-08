@@ -103,6 +103,7 @@ docs                     # Demo, deployment, and test docs
 
 - Full demo flow: `docs/demo-application.md`
 - Windows release guide: `docs/windows-release.md`
+- Windows pipeline troubleshooting: `docs/windows-pipeline-troubleshooting.md`
 - Runtime logs: `docs/processing-log.md`
 - Interface map: `docs/interface-map.md`
 - Short startup checklist: `docs/startup-test.md`

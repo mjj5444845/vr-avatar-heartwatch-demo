@@ -57,7 +57,7 @@ struct iPhoneHeartRateBridgeView: View {
                             .font(.headline)
                             .foregroundStyle(.secondary)
                         HStack(alignment: .firstTextBaseline) {
-                            Text("\(dashboard.latest?.heartRate ?? bridge.lastPostedHeartRate ?? 0)")
+                            Text("\(dashboard.latest?.heartRate ?? bridge.lastPostedHeartRate ?? bridge.lastReceivedHeartRate ?? 0)")
                                 .font(.system(size: 76, weight: .bold, design: .rounded))
                                 .minimumScaleFactor(0.7)
                             Text("bpm")
@@ -80,6 +80,13 @@ struct iPhoneHeartRateBridgeView: View {
                         LabeledContent("Zone", value: latest.zone?.name ?? "unknown")
                         LabeledContent("Source", value: latest.source)
                         LabeledContent("Latest sample", value: latest.timestamp)
+                    } else if let received = bridge.lastReceivedHeartRate {
+                        LabeledContent("Watch received", value: "\(received) bpm")
+                        if let receivedAt = bridge.lastReceivedAt {
+                            LabeledContent("Received at", value: receivedAt)
+                        }
+                        Label("The iPhone received Watch data, but it has not been stored yet. Start the VR demo with Quest right-hand B, then keep this app open.", systemImage: "iphone.gen3.radiowaves.left.and.right")
+                            .foregroundStyle(.secondary)
                     } else {
                         Label("No heart-rate sample yet. Press Quest right-hand B first, then start Apple Watch.", systemImage: "exclamationmark.circle")
                             .foregroundStyle(.secondary)
@@ -305,14 +312,17 @@ struct iPhoneHeartRateBridgeView: View {
                     Toggle("Auto refresh every 3s", isOn: $autoRefreshEnabled)
                     LabeledContent("API", value: apiStatus)
                     LabeledContent("Watch bridge", value: bridge.lastStatus)
+                    if let received = bridge.lastReceivedHeartRate {
+                        LabeledContent("Last Watch sample", value: "\(received) bpm")
+                    }
                     LabeledContent("Dashboard", value: isSyncing ? "Syncing" : syncStatus)
                 }
 
                 DemoPanel(title: "Local Startup") {
-                    StepRow(number: 1, title: "Run launcher", detail: "Mac: scripts/start-demo-macos.command")
-                    StepRow(number: 2, title: "Set API URL", detail: "Use http://COMPUTER_IP:8787")
-                    StepRow(number: 3, title: "Start VR", detail: "Quest right-hand B")
-                    StepRow(number: 4, title: "Exit VR", detail: "Quest right-hand Menu stops recording")
+                    StepRow(number: 1, title: "Run Windows launcher", detail: "Use PowerShell and keep the launcher window open")
+                    StepRow(number: 2, title: "Test in iPhone Safari", detail: "Open http://WINDOWS_WIFI_IP:8787/api/health")
+                    StepRow(number: 3, title: "Set API URL", detail: "Enter http://WINDOWS_WIFI_IP:8787 without /api/health")
+                    StepRow(number: 4, title: "Start VR", detail: "Press Quest right-hand B before starting Watch streaming")
                 }
             }
             .navigationTitle("Settings")
