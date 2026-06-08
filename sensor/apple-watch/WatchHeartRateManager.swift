@@ -21,9 +21,10 @@ final class WatchHeartRateManager: NSObject, ObservableObject, HKWorkoutSessionD
         }
     }
 
-    func requestAuthorization() {
+    func requestAuthorization(completion: ((Bool) -> Void)? = nil) {
         guard HKHealthStore.isHealthDataAvailable(),
               let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            completion?(false)
             return
         }
 
@@ -34,6 +35,18 @@ final class WatchHeartRateManager: NSObject, ObservableObject, HKWorkoutSessionD
                 } else {
                     self.status = success ? "Health permission granted" : "Health permission denied"
                 }
+                completion?(success)
+            }
+        }
+    }
+
+    func authorizeAndStartWorkout() {
+        requestAuthorization { [weak self] success in
+            guard let self else { return }
+            if success {
+                self.startWorkout()
+            } else {
+                self.status = "Open Health permissions for HeartWatch"
             }
         }
     }

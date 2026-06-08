@@ -13,7 +13,7 @@ struct WatchHeartRateView: View {
                 .multilineTextAlignment(.center)
 
             Button(manager.isRunning ? "Stop" : "Start") {
-                manager.isRunning ? manager.stopWorkout() : manager.startWorkout()
+                manager.isRunning ? manager.stopWorkout() : manager.authorizeAndStartWorkout()
             }
             .buttonStyle(.borderedProminent)
         }
