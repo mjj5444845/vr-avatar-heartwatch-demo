@@ -44,6 +44,29 @@ The launcher will:
 3. Open the built Unity app if it exists.
 4. Open the Unity project if no built app exists yet.
 
+## Copy To Windows
+
+For a Windows presentation machine, copy the repo folder after dependencies have been installed, or clone the repo on Windows and run `npm install` once.
+
+Minimum files and folders needed on Windows:
+
+```text
+apps/api
+database
+scripts/start-demo-windows.ps1
+package.json
+package-lock.json
+release/Windows
+```
+
+Run from the repo root:
+
+```powershell
+.\scripts\start-demo-windows.ps1
+```
+
+Keep iPhone, Quest 3, and the Windows computer on the same Wi-Fi. In the iPhone app Settings tab, use the API URL printed by the Windows script, for example `http://WINDOWS_IP:8787`.
+
 ## Demo Controls
 
 - Quest right-hand **B**: start the demo and write `demo_start`.

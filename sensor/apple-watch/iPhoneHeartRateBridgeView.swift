@@ -50,8 +50,8 @@ struct iPhoneHeartRateBridgeView: View {
 
     private var overviewTab: some View {
         NavigationStack {
-            List {
-                Section {
+            DemoScrollView {
+                DemoPanel {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Live heart rate")
                             .font(.headline)
@@ -67,7 +67,7 @@ struct iPhoneHeartRateBridgeView: View {
                     }
                     .padding(.vertical, 8)
 
-                    HStack {
+                    HStack(spacing: 10) {
                         StatusPill(title: "API", value: apiStatus)
                         StatusPill(title: "Watch", value: bridge.lastStatus)
                     }
@@ -86,14 +86,14 @@ struct iPhoneHeartRateBridgeView: View {
                     }
                 }
 
-                Section("Demo Flow") {
+                DemoPanel(title: "Demo Flow") {
                     StepRow(number: 1, title: "Start computer side", detail: "Run the macOS or Windows launcher")
                     StepRow(number: 2, title: "Start VR", detail: "Press Quest right-hand B")
                     StepRow(number: 3, title: "Start Watch", detail: "Tap Start on Apple Watch")
                     StepRow(number: 4, title: "Inspect records", detail: "Heart rate, VR events, and database rows refresh here")
                 }
 
-                Section("Heart-rate Trend") {
+                DemoPanel(title: "Heart-rate Trend") {
                     if chartSamples.isEmpty {
                         EmptyState(
                             icon: "waveform.path.ecg",
@@ -118,7 +118,6 @@ struct iPhoneHeartRateBridgeView: View {
             }
             .navigationTitle("Overview")
             .navigationBarTitleDisplayMode(.inline)
-            .listStyle(.plain)
             .toolbar {
                 Button("Refresh") {
                     Task {
@@ -134,16 +133,16 @@ struct iPhoneHeartRateBridgeView: View {
 
     private var dataTab: some View {
         NavigationStack {
-            List {
-                Section("Database Summary") {
-                    VStack(spacing: 12) {
+            DemoScrollView {
+                DemoPanel(title: "Database Summary") {
+                    HStack(spacing: 10) {
                         MetricCard(title: "Samples", value: "\(dashboard.databaseSummary?.samples ?? dashboard.samples.count)")
                         MetricCard(title: "VR events", value: "\(dashboard.databaseSummary?.events ?? dashboard.events.count)")
                         MetricCard(title: "Dialogue", value: "\(dashboard.databaseSummary?.chat ?? dashboard.chatMessages.count)")
                     }
                 }
 
-                Section("SQLite Tables") {
+                DemoPanel(title: "SQLite Tables") {
                     if dashboard.databaseTables.isEmpty {
                         EmptyState(
                             icon: "externaldrive.badge.questionmark",
@@ -156,26 +155,37 @@ struct iPhoneHeartRateBridgeView: View {
                                 Text(table.name).tag(table.name)
                             }
                         }
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
                         if let table = selectedTable {
-                            LabeledContent("Rows", value: "\(table.rowCount)")
-                            DisclosureGroup("Columns") {
+                            HStack {
+                                Label("\(table.rowCount) rows", systemImage: "number")
+                                Spacer()
+                                Text("\(table.columns.count) columns")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .font(.subheadline.weight(.semibold))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Columns")
+                                    .font(.headline)
                                 ForEach(table.columns) { column in
-                                    VStack(alignment: .leading, spacing: 3) {
-                                        Text(column.name)
-                                            .font(.headline)
-                                        Text(columnDescription(column))
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    .padding(.vertical, 3)
+                                    ColumnRow(column: column, description: columnDescription(column))
                                 }
                             }
 
-                            ForEach(Array(table.rows.enumerated()), id: \.offset) { index, row in
-                                DisclosureGroup("Row \(index + 1)") {
-                                    ForEach(table.columns) { column in
-                                        LabeledContent(column.name, value: row[column.name]?.description ?? "--")
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Recent Rows")
+                                    .font(.headline)
+
+                                if table.rows.isEmpty {
+                                    Text("No rows stored yet.")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                } else {
+                                    ForEach(Array(table.rows.prefix(8).enumerated()), id: \.offset) { index, row in
+                                        DatabaseRowCard(index: index + 1, columns: table.columns, row: row)
                                     }
                                 }
                             }
@@ -185,7 +195,6 @@ struct iPhoneHeartRateBridgeView: View {
             }
             .navigationTitle("Database")
             .navigationBarTitleDisplayMode(.inline)
-            .listStyle(.plain)
             .toolbar {
                 Button("Refresh") {
                     Task {
@@ -201,8 +210,8 @@ struct iPhoneHeartRateBridgeView: View {
 
     private var vrTestTab: some View {
         NavigationStack {
-            List {
-                Section("VR API Contract") {
+            DemoScrollView {
+                DemoPanel(title: "VR API Contract") {
                     EndpointRow(method: "GET", path: "/api/latest", detail: "Read the current heart-rate panel")
                     EndpointRow(method: "POST", path: "/api/demo/start", detail: "Quest B starts the demo")
                     EndpointRow(method: "POST", path: "/api/demo/stop", detail: "VR exits and stops recording")
@@ -210,7 +219,7 @@ struct iPhoneHeartRateBridgeView: View {
                     EndpointRow(method: "GET", path: "/api/chat", detail: "Read dialogue rows")
                 }
 
-                Section("Interface Check") {
+                DemoPanel(title: "Interface Check") {
                     Button {
                         Task {
                             await runVRInterfaceCheck()
@@ -227,7 +236,7 @@ struct iPhoneHeartRateBridgeView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Section("Latest VR Records") {
+                DemoPanel(title: "Latest VR Records") {
                     if let latestEvent = dashboard.demoStatus?.latestEvent {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Latest event")
@@ -259,7 +268,6 @@ struct iPhoneHeartRateBridgeView: View {
             }
             .navigationTitle("VR API")
             .navigationBarTitleDisplayMode(.inline)
-            .listStyle(.plain)
             .toolbar {
                 Button("Refresh") {
                     Task {
@@ -272,12 +280,13 @@ struct iPhoneHeartRateBridgeView: View {
 
     private var settingsTab: some View {
         NavigationStack {
-            List {
-                Section("Connection") {
+            DemoScrollView {
+                DemoPanel(title: "Connection") {
                     TextField("http://YOUR_MAC_IP:8787", text: $apiURLText)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .keyboardType(.URL)
+                        .textFieldStyle(.roundedBorder)
 
                     Button("Save and Test") {
                         Task {
@@ -299,7 +308,7 @@ struct iPhoneHeartRateBridgeView: View {
                     LabeledContent("Dashboard", value: isSyncing ? "Syncing" : syncStatus)
                 }
 
-                Section("Local Startup") {
+                DemoPanel(title: "Local Startup") {
                     StepRow(number: 1, title: "Run launcher", detail: "Mac: scripts/start-demo-macos.command")
                     StepRow(number: 2, title: "Set API URL", detail: "Use http://COMPUTER_IP:8787")
                     StepRow(number: 3, title: "Start VR", detail: "Quest right-hand B")
@@ -308,7 +317,6 @@ struct iPhoneHeartRateBridgeView: View {
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
-            .listStyle(.plain)
         }
     }
 
@@ -354,15 +362,17 @@ struct iPhoneHeartRateBridgeView: View {
         defer { isSyncing = false }
 
         do {
-            dashboard = try await HeartWatchAPIClient(baseURL: baseURL).fetchDashboardData()
-            bridge.isPostingEnabled = dashboard.demoStatus?.isRunning == true
-            syncStatus = "Synced \(dashboard.samples.count) samples"
-            if !dashboard.databaseTables.isEmpty,
-               !dashboard.databaseTables.contains(where: { $0.name == selectedTableName }) {
-                selectedTableName = dashboard.databaseTables[0].name
+            let nextDashboard = try await HeartWatchAPIClient(baseURL: baseURL).fetchDashboardData()
+            dashboard = nextDashboard
+            bridge.isPostingEnabled = nextDashboard.demoStatus?.isRunning == true
+            let tableCount = nextDashboard.databaseTables.count
+            syncStatus = "Synced \(nextDashboard.samples.count) samples, \(tableCount) tables"
+            if !nextDashboard.databaseTables.isEmpty,
+               !nextDashboard.databaseTables.contains(where: { $0.name == selectedTableName }) {
+                selectedTableName = nextDashboard.databaseTables[0].name
             }
         } catch {
-            syncStatus = "Sync failed: \(error.localizedDescription)"
+            syncStatus = "Sync failed"
         }
     }
 
@@ -423,12 +433,54 @@ private struct StatusPill: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.body.weight(.semibold))
+                .font(.subheadline.weight(.semibold))
                 .lineLimit(2)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(.thinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+private struct DemoScrollView<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 12) {
+                content
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
+        }
+        .background(Color(.systemGroupedBackground))
+    }
+}
+
+private struct DemoPanel<Content: View>: View {
+    var title: String?
+    @ViewBuilder var content: Content
+
+    init(title: String? = nil, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let title {
+                Text(title)
+                    .font(.headline)
+            }
+            content
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .background(.thinMaterial)
+        .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
@@ -440,14 +492,74 @@ private struct MetricCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(value)
-                .font(.largeTitle.bold())
+                .font(.title2.bold())
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
             Text(title)
-                .font(.headline)
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
+        .padding(12)
         .background(.thinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+private struct ColumnRow: View {
+    let column: DatabaseColumnRecord
+    let description: String
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(column.name)
+                    .font(.subheadline.weight(.semibold))
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 12)
+            if let defaultValue = column.defaultValue, defaultValue.description != "--" {
+                Text(defaultValue.description)
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+private struct DatabaseRowCard: View {
+    let index: Int
+    let columns: [DatabaseColumnRecord]
+    let row: [String: JSONValue]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Row \(index)")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            ForEach(columns) { column in
+                HStack(alignment: .top, spacing: 10) {
+                    Text(column.name)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 112, alignment: .leading)
+                    Text(row[column.name]?.description ?? "--")
+                        .font(.caption.monospaced())
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.tertiarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }

@@ -4,22 +4,22 @@ struct HeartWatchAPIClient {
     var baseURL: URL
 
     func fetchDashboardData() async throws -> HeartWatchDashboardData {
-        async let latest: LatestHeartRateRecord? = fetchOptional("/api/latest")
-        async let samples: [HeartRateSampleRecord] = fetchArray("/api/samples")
-        async let events: [AvatarEventRecord] = fetchArray("/api/events")
-        async let chat: [ChatMessageRecord] = fetchArray("/api/chat")
-        async let databaseSummary: DatabaseSummaryRecord? = fetchOptional("/api/db/summary")
-        async let databaseTables: DatabaseTablesResponse? = fetchOptional("/api/db/tables")
-        async let demoStatus: DemoStatusRecord? = fetchOptional("/api/demo/status")
+        async let latestResult: LatestHeartRateRecord? = optionalOrNil("/api/latest")
+        async let samplesResult: [HeartRateSampleRecord] = arrayOrEmpty("/api/samples")
+        async let eventsResult: [AvatarEventRecord] = arrayOrEmpty("/api/events")
+        async let chatResult: [ChatMessageRecord] = arrayOrEmpty("/api/chat")
+        async let summaryResult: DatabaseSummaryRecord? = optionalOrNil("/api/db/summary")
+        async let tablesResult: DatabaseTablesResponse? = optionalOrNil("/api/db/tables")
+        async let statusResult: DemoStatusRecord? = optionalOrNil("/api/demo/status")
 
-        return try await HeartWatchDashboardData(
-            latest: latest,
-            samples: samples,
-            events: events,
-            chatMessages: chat,
-            databaseSummary: databaseSummary,
-            databaseTables: databaseTables?.tables ?? [],
-            demoStatus: demoStatus
+        return await HeartWatchDashboardData(
+            latest: latestResult,
+            samples: samplesResult,
+            events: eventsResult,
+            chatMessages: chatResult,
+            databaseSummary: summaryResult,
+            databaseTables: tablesResult?.tables ?? [],
+            demoStatus: statusResult
         )
     }
 
@@ -63,7 +63,8 @@ struct HeartWatchAPIClient {
     }
 
     private func fetchOptional<T: Decodable>(_ path: String) async throws -> T? {
-        let (data, _) = try await URLSession.shared.data(from: endpoint(path))
+        let (data, response) = try await URLSession.shared.data(from: endpoint(path))
+        try validate(response)
         if data.isEmpty || String(data: data, encoding: .utf8) == "null" {
             return nil
         }
@@ -71,8 +72,17 @@ struct HeartWatchAPIClient {
     }
 
     private func fetchArray<T: Decodable>(_ path: String) async throws -> [T] {
-        let (data, _) = try await URLSession.shared.data(from: endpoint(path))
+        let (data, response) = try await URLSession.shared.data(from: endpoint(path))
+        try validate(response)
         return try JSONDecoder().decode([T].self, from: data)
+    }
+
+    private func optionalOrNil<T: Decodable>(_ path: String) async -> T? {
+        try? await fetchOptional(path)
+    }
+
+    private func arrayOrEmpty<T: Decodable>(_ path: String) async -> [T] {
+        (try? await fetchArray(path)) ?? []
     }
 
     private func post<T: Decodable>(_ path: String, payload: [String: Any]) async throws -> T {
@@ -90,6 +100,13 @@ struct HeartWatchAPIClient {
 
     private func endpoint(_ path: String) -> URL {
         URL(string: path, relativeTo: baseURL)!.absoluteURL
+    }
+
+    private func validate(_ response: URLResponse) throws {
+        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard statusCode >= 200 && statusCode < 300 else {
+            throw URLError(.badServerResponse)
+        }
     }
 }
 

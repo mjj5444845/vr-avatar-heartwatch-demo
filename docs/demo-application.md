@@ -50,6 +50,29 @@ The Windows script starts the same SQLite API and opens:
 release\Windows\VRAvatarHeartWatch.exe
 ```
 
+### Copy Package For Windows
+
+If you want to run the demo on a separate Windows machine, copy the repo after dependencies are installed, or clone the repo on Windows and run `npm install` once.
+
+Minimum Windows demo package:
+
+```text
+apps/api
+database
+scripts/start-demo-windows.ps1
+package.json
+package-lock.json
+release/Windows
+```
+
+Use the repo root as the working folder. The PowerShell script starts the local API from `apps/api`, creates/uses the SQLite database through `database/schema.sql`, and launches `release\Windows\VRAvatarHeartWatch.exe`.
+
+The iPhone app must use the Windows computer's LAN URL, not `localhost`. Use the URL printed by the PowerShell script, for example:
+
+```text
+http://WINDOWS_IP:8787
+```
+
 ## Build Outputs
 
 Open the Unity project:
