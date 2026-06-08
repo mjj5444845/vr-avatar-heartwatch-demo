@@ -27,7 +27,7 @@ Open this project directly in Xcode. It already contains:
 - iPhone app target: `HeartWatchDemo`
 - embedded watchOS target: `HeartWatchDemoWatchApp`
 - HealthKit entitlement for the Watch target
-- automatic signing with Team `W9CMCJ9NYR`
+- automatic signing. Set your own Apple Developer Team in Xcode before installing to devices.
 
 The source of truth for regenerating the project is:
 
@@ -42,7 +42,7 @@ cd ios/HeartWatchDemo
 xcodegen generate --spec project.yml
 ```
 
-If you use a different Apple Developer account later, change the Team in Xcode or update `DEVELOPMENT_TEAM` in `project.yml`.
+Before a device build, change the Team in Xcode or update `DEVELOPMENT_TEAM` in `project.yml`. Do not commit a personal Team ID to a public repository.
 
 ## Swift Files In Targets
 

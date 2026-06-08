@@ -33,6 +33,36 @@ app.get("/api/db/summary", (_request, response) => {
   });
 });
 
+app.get("/api/db/tables", (_request, response) => {
+  const tableNames = getDemoTableNames();
+  const tables = tableNames.map((name) => ({
+    name,
+    columns: db.prepare(`PRAGMA table_info(${name})`).all().map((column) => ({
+      name: column.name,
+      type: column.type,
+      required: column.notnull === 1,
+      primaryKey: column.pk === 1,
+      defaultValue: column.dflt_value
+    })),
+    rowCount: db.prepare(`SELECT COUNT(*) AS count FROM ${name}`).get().count,
+    rows: db.prepare(`SELECT * FROM ${name} ORDER BY timestamp DESC LIMIT 20`).all()
+  }));
+
+  response.json({ tables });
+});
+
+app.get("/api/db/tables/:name", (request, response) => {
+  const tableName = request.params.name;
+  if (!getDemoTableNames().includes(tableName)) {
+    response.status(404).json({ error: "unknown table" });
+    return;
+  }
+
+  const limit = Math.min(Number(request.query.limit || 50), 100);
+  const rows = db.prepare(`SELECT * FROM ${tableName} ORDER BY timestamp DESC LIMIT ?`).all(limit);
+  response.json({ table: tableName, rows });
+});
+
 app.post("/api/samples", (request, response) => {
   const sample = normalizeSample(request.body);
   const message = createAvatarMessage(sample);
@@ -267,4 +297,8 @@ function normalizeRole(value) {
 function normalizeConversationInitiator(value) {
   const allowed = new Set(["user", "avatar"]);
   return allowed.has(value) ? value : "user";
+}
+
+function getDemoTableNames() {
+  return ["heart_rate_samples", "avatar_messages", "vr_events", "chat_messages"];
 }

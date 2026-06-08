@@ -129,3 +129,5 @@ The included Swift files are split by target:
 ## Completion Notes
 
 See `docs/project-completion.md` for the current implementation status, verification commands, and full Apple Watch to iPhone app to VR to SQLite operation steps.
+
+For the shortest end-to-end checklist, use `docs/startup-test.md`.
