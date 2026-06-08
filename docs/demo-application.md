@@ -1,6 +1,6 @@
 # Lightweight Demo Application
 
-This project is a presentation demo for how four parts connect:
+This project demonstrates how four parts connect:
 
 ```text
 Apple Watch -> iPhone App -> SQLite API/Database <- Unity Quest 3 VR
@@ -9,50 +9,48 @@ Apple Watch -> iPhone App -> SQLite API/Database <- Unity Quest 3 VR
                             iPhone Data Views
 ```
 
-The goal is not to make a production health product. The goal is to make the connection visible:
+It is not a production health product. It is a presentation demo:
 
-- Apple Watch produces live heart-rate samples.
-- iPhone receives the Watch stream and posts samples to the local API.
-- SQLite stores the samples, avatar messages, VR events, and conversation rows.
-- Unity/Quest reads the latest heart rate and writes VR dialogue/events.
-- iPhone reads the same database API and shows what is stored.
+- Apple Watch collects live heart-rate data.
+- iPhone App receives the Watch stream and writes it to the local SQLite backend.
+- SQLite stores heart-rate samples, avatar messages, VR events, and dialogue rows.
+- Unity/Quest reads the latest heart rate and writes VR start, exit, and dialogue events back to the database.
+- iPhone App reads from the same backend to show charts, table structure, and stored records.
 
 ## One-file Start
 
 ### macOS
 
-Double-click:
+Double-click or run:
 
 ```text
 scripts/start-demo-macos.command
 ```
 
-Or run:
-
-```bash
-./scripts/start-demo-macos.command
-```
-
-The file starts the SQLite API, prints the local network URL, and opens the built macOS Unity app if it exists. If the app has not been built yet, it opens the Unity project.
+This starts the SQLite API, prints the computer LAN URL, and opens the built macOS Unity app if it exists. If the app has not been built yet, it opens the Unity project.
 
 ### Windows
 
-Right-click and run with PowerShell:
+Run in PowerShell:
 
 ```text
 scripts/start-demo-windows.ps1
 ```
 
-If PowerShell blocks the script during a local demo, run this once in the repo folder:
+If PowerShell blocks the script during a local demo, run this from the repo root:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\scripts\start-demo-windows.ps1
 ```
 
-The Windows script starts the same SQLite API and opens `release\Windows\VRAvatarHeartWatch.exe` if it exists.
+The Windows script starts the same SQLite API and opens:
 
-## Build macOS, Windows, and Quest Outputs
+```text
+release\Windows\VRAvatarHeartWatch.exe
+```
+
+## Build Outputs
 
 Open the Unity project:
 
@@ -68,7 +66,7 @@ VR Avatar Demo > Build > Windows Demo App
 VR Avatar Demo > Build > Quest 3 Android APK
 ```
 
-The expected output locations are:
+Expected outputs:
 
 ```text
 release/macOS/VRAvatarHeartWatch.app
@@ -76,50 +74,54 @@ release/Windows/VRAvatarHeartWatch.exe
 release/Quest3/VRAvatarHeartWatch.apk
 ```
 
-Windows builds require the Windows Build Support module in Unity. If batchmode says `Verify that the module for StandaloneWindows64 is installed`, install that module from Unity Hub, then run the same build menu again. Quest builds require Android Build Support and OpenXR/Quest setup.
+Windows builds require Unity Windows Build Support. If batch mode reports that the `StandaloneWindows64` module is missing, install that module in Unity Hub and run the same build menu again.
 
-## Demo Controls
+## VR Controls
 
-In Quest 3:
+Quest 3:
 
-- Right-hand **B**: start the whole demo and write a `demo_start` event to SQLite.
-- Right-hand **A**: advance the current scripted conversation.
-- Left-hand **X**: start/replay the current script.
+- Right-hand **B**: start the demo and write `demo_start`.
+- Right-hand **A**: advance the current scripted dialogue.
+- Left-hand **X**: start or replay the current script.
 - Left-hand **Y**: switch to the next script.
+- Right-hand **Menu**: exit the VR app, write `demo_stop`, and stop live recording.
 
-In Unity Editor keyboard fallback:
+Unity Editor keyboard:
 
-- `B`: start the whole demo.
+- `B`: start the demo.
 - `N` or `Enter`: next line.
-- `X`: start/replay current script.
+- `X`: start or replay the current script.
 - `Y`: switch script.
+- `Q`: exit and stop recording.
 
-## Demo Flow
+## Presentation Flow
 
-1. Run the one-file start script on Mac or Windows.
+1. Run the macOS or Windows one-file launcher.
 2. Copy the printed API URL, for example `http://192.168.1.20:8787`.
-3. Open the iPhone app and set the API URL in Settings.
-4. Open the Apple Watch app and tap **Start**.
-5. Confirm the iPhone app shows live bpm and database rows.
-6. Put on Quest 3 and press right-hand **B**.
-7. Watch the VR heart-rate panel update from `/api/latest`.
-8. Press **A** to advance dialogue.
-9. Open the iPhone app `Data` and `VR Test` tabs to show rows written by Watch and VR.
+3. Enter that API URL in the iPhone app Settings tab.
+4. Press right-hand **B** in Quest 3 to start the demo.
+5. Tap **Start** in the Apple Watch app.
+6. The iPhone app refreshes heart rate, database tables, and VR records every 3 seconds.
+7. Press **A** in Quest 3 to advance dialogue.
+8. Inspect writes in the iPhone app Data and VR tabs.
+9. End the demo by pressing the Quest right-hand **Menu** button. The VR app exits, writes `demo_stop`, and iPhone stops writing live samples to the backend.
+10. Tap **Stop** on Apple Watch to end the workout session.
 
-## Database As The Demo Backend
+## SQLite As A Small Backend
 
-SQLite is the local backend for the demo, like a small game save/database service. It stores:
+SQLite is the local backend for the demo, similar to a lightweight game save service. It stores:
 
 - `heart_rate_samples`: Apple Watch/iPhone heart-rate samples.
-- `avatar_messages`: generated avatar messages based on heart-rate zones.
-- `vr_events`: VR demo events such as `demo_start`.
-- `chat_messages`: scripted user/avatar/system dialogue rows.
+- `avatar_messages`: avatar messages generated from heart-rate zones.
+- `vr_events`: VR start, stop, and other events.
+- `chat_messages`: user, avatar, and system dialogue rows.
 
-The API exposes the storage as readable demo data:
+Main endpoints:
 
 ```text
 GET  /api/demo/status
 POST /api/demo/start
+POST /api/demo/stop
 GET  /api/latest
 POST /api/samples
 GET  /api/db/summary
@@ -131,6 +133,4 @@ GET  /api/chat
 
 ## Presentation Sentence
 
-Use this short explanation while presenting:
-
-> This is a four-part lightweight demo. Apple Watch streams heart rate to the iPhone app. The iPhone posts it into a local SQLite backend. Quest 3 reads the latest heart rate from that backend and writes avatar dialogue/events back into it. The iPhone app reads the same backend so we can inspect the live chart, database tables, and VR conversation history.
+> This is a four-part connection demo. Apple Watch collects heart rate, the iPhone app writes it to a local SQLite backend, Quest 3 reads the latest heart rate in VR and writes avatar events back to the database, and the iPhone app reads the same backend so viewers can inspect the live chart, database tables, VR events, and dialogue history.

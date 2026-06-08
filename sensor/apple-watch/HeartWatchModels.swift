@@ -59,6 +59,7 @@ struct DatabaseSummaryRecord: Codable {
 
 struct DemoStatusRecord: Codable {
     let ok: Bool
+    let isRunning: Bool
     let database: String
     let latest: LatestHeartRateRecord?
     let latestEvent: AvatarEventRecord?

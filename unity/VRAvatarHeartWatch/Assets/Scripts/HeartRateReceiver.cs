@@ -25,6 +25,7 @@ public class HeartRateReceiver : MonoBehaviour
     public string apiBaseUrl = "http://127.0.0.1:8787";
     public float pollIntervalSeconds = 2.0f;
     public HeartRateSample LatestSample { get; private set; }
+    public bool IsPolling { get; private set; } = true;
 
     public event Action<HeartRateSample> OnSampleUpdated;
 
@@ -33,10 +34,20 @@ public class HeartRateReceiver : MonoBehaviour
         StartCoroutine(PollLatestSample());
     }
 
+    public void StopPolling()
+    {
+        IsPolling = false;
+    }
+
     private IEnumerator PollLatestSample()
     {
         while (true)
         {
+            if (!IsPolling)
+            {
+                yield break;
+            }
+
             using UnityWebRequest request = UnityWebRequest.Get($"{apiBaseUrl}/api/latest");
             yield return request.SendWebRequest();
 
@@ -50,4 +61,3 @@ public class HeartRateReceiver : MonoBehaviour
         }
     }
 }
-

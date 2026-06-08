@@ -11,7 +11,7 @@ struct iPhoneHeartRateBridgeView: View {
     @State private var apiStatus = "Not checked"
     @State private var isSyncing = false
     @State private var selectedTableName = "heart_rate_samples"
-    @State private var vrTestStatus = "Run the checks below after starting the Mac API."
+    @State private var vrTestStatus = "Start the local API, then run the interface check here."
     @State private var autoRefreshEnabled = true
 
     var body: some View {
@@ -28,7 +28,7 @@ struct iPhoneHeartRateBridgeView: View {
 
             vrTestTab
                 .tabItem {
-                    Label("VR Test", systemImage: "visionpro")
+                    Label("VR", systemImage: "visionpro")
                 }
 
             settingsTab
@@ -74,21 +74,23 @@ struct iPhoneHeartRateBridgeView: View {
 
                     Toggle("Auto refresh every 3s", isOn: $autoRefreshEnabled)
 
+                    LabeledContent("Demo state", value: demoStateText)
+
                     if let latest = dashboard.latest {
-                        LabeledContent("Zone", value: latest.zone?.name.capitalized ?? "Unknown")
+                        LabeledContent("Zone", value: latest.zone?.name ?? "unknown")
                         LabeledContent("Source", value: latest.source)
                         LabeledContent("Latest sample", value: latest.timestamp)
                     } else {
-                        Label("No heart-rate sample yet", systemImage: "exclamationmark.circle")
+                        Label("No heart-rate sample yet. Press Quest right-hand B first, then start Apple Watch.", systemImage: "exclamationmark.circle")
                             .foregroundStyle(.secondary)
                     }
                 }
 
-                Section("Quick Test Flow") {
-                    StepRow(number: 1, title: "Start demo file", detail: "Run start-demo on Mac or Windows")
-                    StepRow(number: 2, title: "Start Watch", detail: "Tap Start on Apple Watch")
-                    StepRow(number: 3, title: "Press Quest B", detail: "VR starts the demo and writes an event")
-                    StepRow(number: 4, title: "Watch this app", detail: "Heart rate, VR chat, and SQLite records update here")
+                Section("Demo Flow") {
+                    StepRow(number: 1, title: "Start computer side", detail: "Run the macOS or Windows launcher")
+                    StepRow(number: 2, title: "Start VR", detail: "Press Quest right-hand B")
+                    StepRow(number: 3, title: "Start Watch", detail: "Tap Start on Apple Watch")
+                    StepRow(number: 4, title: "Inspect records", detail: "Heart rate, VR events, and database rows refresh here")
                 }
 
                 Section("Heart-rate Trend") {
@@ -96,7 +98,7 @@ struct iPhoneHeartRateBridgeView: View {
                         EmptyState(
                             icon: "waveform.path.ecg",
                             title: "Waiting for samples",
-                            message: "Start the Watch app, then tap Sync."
+                            message: "Press B to start the demo, then start Apple Watch."
                         )
                     } else {
                         Chart(chartSamples) { sample in
@@ -114,9 +116,11 @@ struct iPhoneHeartRateBridgeView: View {
                     }
                 }
             }
-            .navigationTitle("HeartWatch")
+            .navigationTitle("Overview")
+            .navigationBarTitleDisplayMode(.inline)
+            .listStyle(.plain)
             .toolbar {
-                Button("Sync") {
+                Button("Refresh") {
                     Task {
                         await refreshAll()
                     }
@@ -134,8 +138,8 @@ struct iPhoneHeartRateBridgeView: View {
                 Section("Database Summary") {
                     VStack(spacing: 12) {
                         MetricCard(title: "Samples", value: "\(dashboard.databaseSummary?.samples ?? dashboard.samples.count)")
-                        MetricCard(title: "Events", value: "\(dashboard.databaseSummary?.events ?? dashboard.events.count)")
-                        MetricCard(title: "Chat", value: "\(dashboard.databaseSummary?.chat ?? dashboard.chatMessages.count)")
+                        MetricCard(title: "VR events", value: "\(dashboard.databaseSummary?.events ?? dashboard.events.count)")
+                        MetricCard(title: "Dialogue", value: "\(dashboard.databaseSummary?.chat ?? dashboard.chatMessages.count)")
                     }
                 }
 
@@ -144,7 +148,7 @@ struct iPhoneHeartRateBridgeView: View {
                         EmptyState(
                             icon: "externaldrive.badge.questionmark",
                             title: "No schema loaded",
-                            message: "Tap Sync after the API is running."
+                            message: "Start the API, then tap Refresh."
                         )
                     } else {
                         Picker("Table", selection: $selectedTableName) {
@@ -180,8 +184,10 @@ struct iPhoneHeartRateBridgeView: View {
                 }
             }
             .navigationTitle("Database")
+            .navigationBarTitleDisplayMode(.inline)
+            .listStyle(.plain)
             .toolbar {
-                Button("Sync") {
+                Button("Refresh") {
                     Task {
                         await refreshAll()
                     }
@@ -196,14 +202,15 @@ struct iPhoneHeartRateBridgeView: View {
     private var vrTestTab: some View {
         NavigationStack {
             List {
-                Section("What VR Uses") {
-                    EndpointRow(method: "GET", path: "/api/latest", detail: "Heart-rate panel and avatar mood")
-                    EndpointRow(method: "POST", path: "/api/demo/start", detail: "Quest B button starts the demo")
-                    EndpointRow(method: "POST", path: "/api/chat/records", detail: "Scripted user/avatar dialogue rows")
-                    EndpointRow(method: "GET", path: "/api/chat", detail: "iPhone conversation history")
+                Section("VR API Contract") {
+                    EndpointRow(method: "GET", path: "/api/latest", detail: "Read the current heart-rate panel")
+                    EndpointRow(method: "POST", path: "/api/demo/start", detail: "Quest B starts the demo")
+                    EndpointRow(method: "POST", path: "/api/demo/stop", detail: "VR exits and stops recording")
+                    EndpointRow(method: "POST", path: "/api/chat/records", detail: "Write scripted dialogue")
+                    EndpointRow(method: "GET", path: "/api/chat", detail: "Read dialogue rows")
                 }
 
-                Section("Run Interface Checks") {
+                Section("Interface Check") {
                     Button {
                         Task {
                             await runVRInterfaceCheck()
@@ -236,7 +243,7 @@ struct iPhoneHeartRateBridgeView: View {
                     }
 
                     if dashboard.chatMessages.isEmpty {
-                        EmptyState(icon: "bubble.left.and.bubble.right", title: "No chat rows", message: "Run the VR test or advance dialogue in Unity.")
+                        EmptyState(icon: "bubble.left.and.bubble.right", title: "No dialogue rows", message: "Run the interface check or advance dialogue in Unity/Quest.")
                     } else {
                         ForEach(dashboard.chatMessages.prefix(8)) { message in
                             VStack(alignment: .leading, spacing: 4) {
@@ -250,9 +257,11 @@ struct iPhoneHeartRateBridgeView: View {
                     }
                 }
             }
-            .navigationTitle("VR Test")
+            .navigationTitle("VR API")
+            .navigationBarTitleDisplayMode(.inline)
+            .listStyle(.plain)
             .toolbar {
-                Button("Sync") {
+                Button("Refresh") {
                     Task {
                         await refreshAll()
                     }
@@ -290,14 +299,16 @@ struct iPhoneHeartRateBridgeView: View {
                     LabeledContent("Dashboard", value: isSyncing ? "Syncing" : syncStatus)
                 }
 
-                Section("Local Setup") {
-                    StepRow(number: 1, title: "Run one start file", detail: "Mac: scripts/start-demo-macos.command")
-                    StepRow(number: 2, title: "Set this API URL", detail: "Use http://YOUR_COMPUTER_IP:8787")
-                    StepRow(number: 3, title: "Start Watch", detail: "Open HeartWatch on Apple Watch")
-                    StepRow(number: 4, title: "Start VR", detail: "Press B on the right Quest controller")
+                Section("Local Startup") {
+                    StepRow(number: 1, title: "Run launcher", detail: "Mac: scripts/start-demo-macos.command")
+                    StepRow(number: 2, title: "Set API URL", detail: "Use http://COMPUTER_IP:8787")
+                    StepRow(number: 3, title: "Start VR", detail: "Quest right-hand B")
+                    StepRow(number: 4, title: "Exit VR", detail: "Quest right-hand Menu stops recording")
                 }
             }
             .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .listStyle(.plain)
         }
     }
 
@@ -309,6 +320,13 @@ struct iPhoneHeartRateBridgeView: View {
         Array(dashboard.samples.prefix(32).reversed().enumerated()).map { index, sample in
             ChartSample(id: sample.id, index: index, heartRate: sample.heartRate)
         }
+    }
+
+    private var demoStateText: String {
+        if dashboard.demoStatus?.isRunning == true {
+            return "Running"
+        }
+        return "Stopped"
     }
 
     private func refreshAll() async {
@@ -337,6 +355,7 @@ struct iPhoneHeartRateBridgeView: View {
 
         do {
             dashboard = try await HeartWatchAPIClient(baseURL: baseURL).fetchDashboardData()
+            bridge.isPostingEnabled = dashboard.demoStatus?.isRunning == true
             syncStatus = "Synced \(dashboard.samples.count) samples"
             if !dashboard.databaseTables.isEmpty,
                !dashboard.databaseTables.contains(where: { $0.name == selectedTableName }) {

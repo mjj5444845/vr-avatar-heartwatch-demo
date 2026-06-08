@@ -47,4 +47,3 @@ public class HeartRateWorldPanel : MonoBehaviour
         }
     }
 }
-

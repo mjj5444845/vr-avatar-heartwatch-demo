@@ -35,6 +35,7 @@ app.get("/api/db/summary", (_request, response) => {
 });
 
 app.get("/api/demo/status", (_request, response) => {
+  const latestDemoEvent = getLatestDemoEvent();
   const latest = db.prepare(`
     SELECT id, source, heart_rate AS heartRate, timestamp
     FROM heart_rate_samples
@@ -64,6 +65,7 @@ app.get("/api/demo/status", (_request, response) => {
 
   response.json({
     ok: true,
+    isRunning: latestDemoEvent?.type === "demo_start",
     database: "sqlite",
     latest: latest ? { ...latest, zone: getZone(latest.heartRate) } : null,
     latestEvent,
@@ -87,6 +89,23 @@ app.post("/api/demo/start", (request, response) => {
   `).run(event);
 
   response.status(201).json({ ok: true, event });
+});
+
+app.post("/api/demo/stop", (request, response) => {
+  const source = String(request.body.source || "vr").trim();
+  const event = {
+    id: request.body.id || crypto.randomUUID(),
+    type: "demo_stop",
+    text: request.body.text || `Demo stopped from ${source}`,
+    timestamp: request.body.timestamp || new Date().toISOString()
+  };
+
+  db.prepare(`
+    INSERT OR REPLACE INTO vr_events (id, type, text, timestamp)
+    VALUES (@id, @type, @text, @timestamp)
+  `).run(event);
+
+  response.status(201).json({ ok: true, isRunning: false, event });
 });
 
 app.get("/api/db/tables", (_request, response) => {
@@ -357,4 +376,14 @@ function normalizeConversationInitiator(value) {
 
 function getDemoTableNames() {
   return ["heart_rate_samples", "avatar_messages", "vr_events", "chat_messages"];
+}
+
+function getLatestDemoEvent() {
+  return db.prepare(`
+    SELECT id, type, text, timestamp
+    FROM vr_events
+    WHERE type IN ('demo_start', 'demo_stop')
+    ORDER BY timestamp DESC
+    LIMIT 1
+  `).get();
 }

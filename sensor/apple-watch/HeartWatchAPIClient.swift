@@ -47,12 +47,19 @@ struct HeartWatchAPIClient {
     func postTestVRConversation() async throws -> ChatMessageRecord {
         let payload: [String: Any] = [
             "role": "avatar",
-            "text": "VR endpoint test: avatar dialogue row written from the iPhone app.",
+            "text": "Interface test: the iPhone app wrote a VR dialogue row.",
             "messageType": "system",
             "conversationInitiator": "avatar",
             "timestamp": ISO8601DateFormatter().string(from: Date())
         ]
         return try await post("/api/chat/records", payload: payload)
+    }
+
+    func fetchDemoStatus() async throws -> DemoStatusRecord {
+        guard let status: DemoStatusRecord = try await fetchOptional("/api/demo/status") else {
+            throw URLError(.badServerResponse)
+        }
+        return status
     }
 
     private func fetchOptional<T: Decodable>(_ path: String) async throws -> T? {

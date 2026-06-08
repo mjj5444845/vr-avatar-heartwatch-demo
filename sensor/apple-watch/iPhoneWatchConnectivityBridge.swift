@@ -7,6 +7,7 @@ final class iPhoneWatchConnectivityBridge: NSObject, ObservableObject, WCSession
 
     @Published var lastPostedHeartRate: Int?
     @Published var lastStatus = "Not connected"
+    @Published var isPostingEnabled = false
 
     var apiBaseURL: URL {
         get {
@@ -47,6 +48,24 @@ final class iPhoneWatchConnectivityBridge: NSObject, ObservableObject, WCSession
     }
 
     private func postSample(_ message: [String: Any]) async {
+        do {
+            let status = try await HeartWatchAPIClient(baseURL: apiBaseURL).fetchDemoStatus()
+            await MainActor.run {
+                self.isPostingEnabled = status.isRunning
+            }
+            guard status.isRunning else {
+                await MainActor.run {
+                    self.lastStatus = "Demo stopped: samples paused"
+                }
+                return
+            }
+        } catch {
+            await MainActor.run {
+                self.lastStatus = "Waiting for demo API"
+            }
+            return
+        }
+
         var request = URLRequest(url: sampleURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

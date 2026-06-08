@@ -5,30 +5,31 @@ import "./styles.css";
 
 const setupSteps = [
   "Run scripts/start-demo-macos.command or scripts/start-demo-windows.ps1.",
-  "Set the iPhone app API base URL to the printed computer LAN address.",
-  "Start the Apple Watch heart-rate workout stream.",
-  "Open the Unity Quest 3 scene or built app on the same network.",
-  "Press the right-hand B button in Quest 3 to start the demo.",
-  "Inspect live heart rate, SQLite tables, VR events, and conversation rows in the iPhone app."
+  "Set the iPhone app API URL to the local network address printed by the startup script.",
+  "Press the Quest 3 right-controller B button to start the demo.",
+  "Tap Start on Apple Watch to begin live heart-rate capture.",
+  "Use the iPhone app to view live heart rate, SQLite tables, VR events, and dialogue records.",
+  "Press the Quest 3 right-controller menu button to exit VR and stop live writes."
 ];
 
 const developerModeSteps = [
-  "Connect iPhone to the Mac and try running the app once from Xcode.",
+  "Connect iPhone to the Mac and run the app once from Xcode.",
   "Open Settings > Privacy & Security > Developer Mode.",
-  "Turn Developer Mode on, restart, then confirm Developer Mode after reboot.",
+  "Turn Developer Mode on, restart the phone, and confirm after reboot.",
   "If the app is blocked, open Settings > General > VPN & Device Management and trust your developer account."
 ];
 
 const endpoints = [
-  ["GET", "/api/demo/status", "Single demo status for app and smoke tests"],
-  ["POST", "/api/demo/start", "Quest B button demo-start event"],
-  ["POST", "/api/samples", "Apple Watch heart-rate samples"],
-  ["GET", "/api/latest", "Unity VR current heart-rate panel"],
-  ["GET", "/api/samples", "iPhone chart and heart-rate history"],
+  ["GET", "/api/demo/status", "Read demo running state, latest heart rate, latest event, and latest dialogue"],
+  ["POST", "/api/demo/start", "Quest B button starts the demo"],
+  ["POST", "/api/demo/stop", "VR exit stops live writes"],
+  ["POST", "/api/samples", "Apple Watch heart-rate sample"],
+  ["GET", "/api/latest", "Unity VR heart-rate panel"],
+  ["GET", "/api/samples", "iPhone heart-rate chart and history"],
   ["GET", "/api/db/tables", "iPhone SQLite table browser"],
-  ["GET", "/api/events", "Avatar zone messages and VR events"],
-  ["POST", "/api/chat/records", "Unity scripted conversation records"],
-  ["GET", "/api/chat", "iPhone conversation table"]
+  ["GET", "/api/events", "Avatar messages and VR events"],
+  ["POST", "/api/chat/records", "Unity scripted dialogue records"],
+  ["GET", "/api/chat", "iPhone dialogue table"]
 ];
 
 export default function App() {
@@ -39,14 +40,15 @@ export default function App() {
           <p className="eyebrow">Quest 3 + Apple Watch + iPhone + SQLite</p>
           <h1>VR Avatar HeartWatch Demo</h1>
           <p className="lead">
-            A lightweight presentation app where Apple Watch heart rate flows into SQLite, Quest 3 reads the same
-            backend in VR, and the iPhone app shows the live chart, database tables, VR events, and dialogue history.
+            A lightweight showcase app where Apple Watch captures heart rate, iPhone forwards samples to a SQLite backend,
+            Quest 3 reads the same data in VR, and avatar dialogue plus exit events are written back to the database.
+            The iPhone app displays charts, table structure, VR events, and dialogue records.
           </p>
         </div>
         <div className="system-card" aria-label="System architecture">
-          <FlowItem icon={<Watch />} label="Apple Watch" detail="HealthKit live heart rate" />
-          <FlowItem icon={<Smartphone />} label="iPhone App" detail="Bridge, chart, records" />
-          <FlowItem icon={<Database />} label="SQLite API" detail="Local durable demo data" />
+          <FlowItem icon={<Watch />} label="Apple Watch" detail="Live heart-rate capture" />
+          <FlowItem icon={<Smartphone />} label="iPhone App" detail="Bridge, charts, records" />
+          <FlowItem icon={<Database />} label="SQLite API" detail="Local backend and database" />
           <FlowItem icon={<Gamepad2 />} label="Quest 3 VR" detail="Avatar scene and panels" />
         </div>
       </section>
@@ -54,14 +56,14 @@ export default function App() {
       <section className="content-grid">
         <InfoPanel title="Current Scope" icon={<GitBranch />}>
           <ul className="clean-list">
-            <li><strong>VR:</strong> Unity Quest 3 scene with Robot Kyle, heart-rate panel, dialogue panel, and scripted controls.</li>
-            <li><strong>Sensor:</strong> Apple Watch HealthKit workout stream sent through WatchConnectivity.</li>
-            <li><strong>Application:</strong> iPhone SwiftUI app for Watch bridge, live chart, records, events, and conversations.</li>
-            <li><strong>Database:</strong> Express API with SQLite tables for samples, avatar messages, VR events, and chat messages.</li>
+            <li><strong>VR:</strong> Unity Quest 3 scene with Robot Kyle, heart-rate panel, dialogue panel, start control, and exit control.</li>
+            <li><strong>Sensor:</strong> Apple Watch captures live heart rate through a HealthKit workout.</li>
+            <li><strong>Application:</strong> iPhone SwiftUI app handles bridging, charts, database browsing, VR events, and dialogue records.</li>
+            <li><strong>Database:</strong> Express API + SQLite stores heart rate, avatar messages, VR events, and dialogue.</li>
           </ul>
         </InfoPanel>
 
-        <InfoPanel title="Start The Demo" icon={<PlayCircle />}>
+        <InfoPanel title="Start Demo" icon={<PlayCircle />}>
           <ol className="step-list">
             {setupSteps.map((step) => <li key={step}>{step}</li>)}
           </ol>
@@ -69,21 +71,20 @@ export default function App() {
       </section>
 
       <section className="docs-section">
-        <InfoPanel title="Mac API" icon={<Database />}>
-          <p>For a presentation, start the local SQLite backend with one file:</p>
-          <CodeBlock code={"./scripts/start-demo-macos.command\n# or on Windows\n.\\scripts\\start-demo-windows.ps1"} />
-          <p>For iPhone and Quest 3, use the Mac LAN address, not localhost:</p>
+        <InfoPanel title="Local Backend" icon={<Database />}>
+          <p>Start the local SQLite backend with one file during the demo:</p>
+          <CodeBlock code={"./scripts/start-demo-macos.command\n# Windows\n.\\scripts\\start-demo-windows.ps1"} />
+          <p>Use the computer's local network address on iPhone and Quest 3, not localhost:</p>
           <CodeBlock code={"http://YOUR_MAC_IP:8787"} />
         </InfoPanel>
 
-        <InfoPanel title="Install On iPhone" icon={<Apple />}>
+        <InfoPanel title="Install on iPhone" icon={<Apple />}>
           <ol className="step-list">
-            <li>Open Xcode and create an iOS app with a watchOS companion app.</li>
-            <li>Add the iPhone Swift files from <code>sensor/apple-watch</code> to the iOS target.</li>
-            <li>Add the Watch Swift files from <code>sensor/apple-watch</code> to the Watch target.</li>
-            <li>Enable HealthKit on Watch and WatchConnectivity on both targets.</li>
-            <li>Select your iPhone as the run destination and press Run.</li>
-            <li>If prompted, trust the developer app on iPhone in Settings.</li>
+            <li>Open <code>ios/HeartWatchDemo/HeartWatchDemo.xcodeproj</code>.</li>
+            <li>Select your own Apple Developer Team in Xcode.</li>
+            <li>Select iPhone as the run device and click Run.</li>
+            <li>The Watch app installs on the paired Apple Watch with the iPhone app.</li>
+            <li>If iPhone blocks the app, trust your developer account in Settings.</li>
           </ol>
         </InfoPanel>
       </section>
@@ -95,12 +96,12 @@ export default function App() {
           </ol>
         </InfoPanel>
 
-        <InfoPanel title="Assemble Targets" icon={<GitBranch />}>
+        <InfoPanel title="Project Targets" icon={<GitBranch />}>
           <ul className="clean-list">
-            <li>iPhone target: bridge app, bridge view, WatchConnectivity bridge, models, and API client.</li>
-            <li>Watch target: Watch app, Watch view, and HealthKit heart-rate manager.</li>
-            <li>Enable HealthKit on Watch and WatchConnectivity on both targets.</li>
-            <li>Use iOS 16 or newer because the iPhone app uses Swift Charts.</li>
+            <li>iPhone target: bridge app, main interface, WatchConnectivity, data models, and API client.</li>
+            <li>Watch target: Watch app, Watch interface, and HealthKit heart-rate manager.</li>
+            <li>The Watch target requires HealthKit; iPhone and Watch both require WatchConnectivity.</li>
+            <li>The iPhone app uses Swift Charts, so it requires iOS 16 or newer.</li>
           </ul>
         </InfoPanel>
       </section>
@@ -120,12 +121,12 @@ export default function App() {
 
         <InfoPanel title="Test Checklist" icon={<CheckCircle2 />}>
           <ul className="clean-list">
-            <li><code>GET /api/demo/status</code> returns the current backend, latest sample, latest event, and latest chat row.</li>
-            <li>Watch app shows a current bpm value after Start and Health permission approval.</li>
-            <li>iPhone app updates every 3 seconds while the API is online.</li>
-            <li>Unity heart-rate panel updates from <code>/api/latest</code>.</li>
-            <li>Quest right-hand B writes a demo-start event visible in the iPhone app.</li>
-            <li>Unity A/X/Y dialogue controls create rows visible in the iPhone app conversation view.</li>
+            <li><code>GET /api/demo/status</code> returns running state, latest sample, latest event, and latest dialogue.</li>
+            <li>The Quest right-controller B button writes a <code>demo_start</code> event.</li>
+            <li>After Apple Watch starts, the iPhone app refreshes heart rate and database records every 3 seconds.</li>
+            <li>The Unity heart-rate panel updates from <code>/api/latest</code>.</li>
+            <li>The Quest right-controller menu button writes <code>demo_stop</code> and stops live writes.</li>
+            <li>A/X/Y dialogue controls write records that are visible in the iPhone app.</li>
           </ul>
         </InfoPanel>
       </section>
