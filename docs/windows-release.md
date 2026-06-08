@@ -66,6 +66,32 @@ http://WINDOWS_IP:8787
 
 Enter that URL in the iPhone app Settings tab. Do not use `localhost` on iPhone, because `localhost` means the iPhone itself.
 
+## Logs
+
+Every Windows run writes logs to:
+
+```text
+logs/demo-run-YYYYMMDD-HHMMSS.log
+logs/api-output-YYYYMMDD-HHMMSS.log
+logs/api-error-YYYYMMDD-HHMMSS.log
+```
+
+Use these logs during a presentation:
+
+- `demo-run` shows startup steps, detected IP addresses, health checks, and Unity launch.
+- `api-output` shows API startup and request lines such as `POST /api/samples` or `GET /api/latest`.
+- `api-error` shows npm/API errors if the backend does not start.
+
+## If iPhone Cannot Open The API URL
+
+1. Open Safari on iPhone.
+2. Visit `http://WINDOWS_IP:8787/api/health`.
+3. If it does not show JSON with `ok=true`, try every URL printed under "All detected LAN candidates".
+4. Make sure iPhone and Windows are on the same Wi-Fi network.
+5. Avoid guest Wi-Fi, VPN, corporate Wi-Fi, and hotspot client isolation.
+6. Re-run PowerShell as Administrator and start the demo again. The script will try to create an inbound firewall rule for TCP port `8787`.
+7. If the firewall prompt appears for Node.js or npm, allow access on Private networks.
+
 ## Demo Flow
 
 1. Run `scripts/start-demo-windows.ps1`.
@@ -75,4 +101,3 @@ Enter that URL in the iPhone app Settings tab. Do not use `localhost` on iPhone,
 5. Tap **Start** on Apple Watch.
 6. Watch the iPhone app Overview/Data/VR tabs.
 7. Press Quest right-hand **Menu** to exit VR and stop live writes.
-

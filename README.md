@@ -103,6 +103,8 @@ docs                     # Demo, deployment, and test docs
 
 - Full demo flow: `docs/demo-application.md`
 - Windows release guide: `docs/windows-release.md`
+- Runtime logs: `docs/processing-log.md`
+- Interface map: `docs/interface-map.md`
 - Short startup checklist: `docs/startup-test.md`
 - iPhone/Watch installation: `docs/ios-application.md`
 - Database schema: `docs/database-schema.md`

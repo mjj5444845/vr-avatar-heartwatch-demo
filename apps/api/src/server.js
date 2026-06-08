@@ -8,6 +8,14 @@ const host = process.env.HOST || "0.0.0.0";
 
 app.use(cors());
 app.use(express.json());
+app.use((request, response, next) => {
+  const start = Date.now();
+  response.on("finish", () => {
+    const elapsed = Date.now() - start;
+    console.log(`${new Date().toISOString()} ${request.method} ${request.originalUrl} ${response.statusCode} ${elapsed}ms`);
+  });
+  next();
+});
 
 app.get("/api/health", (_request, response) => {
   response.json({ ok: true, database: "sqlite" });
