@@ -7,21 +7,25 @@ public class QuestScriptedInputController : MonoBehaviour
     public InputActionProperty leftXButton;
     public InputActionProperty leftYButton;
     public InputActionProperty rightAButton;
+    public InputActionProperty rightBButton;
 
     public Key editorStartKey = Key.X;
     public Key editorSwitchKey = Key.Y;
     public Key editorNextKey = Key.N;
     public Key editorNextAltKey = Key.Enter;
+    public Key editorDemoStartKey = Key.B;
 
     private bool wasEditorStartPressed;
     private bool wasEditorSwitchPressed;
     private bool wasEditorNextPressed;
+    private bool wasEditorDemoStartPressed;
 
     private void Reset()
     {
         leftXButton = CreateButtonAction("Quest Left X", "<XRController>{LeftHand}/primaryButton");
         leftYButton = CreateButtonAction("Quest Left Y", "<XRController>{LeftHand}/secondaryButton");
         rightAButton = CreateButtonAction("Quest Right A", "<XRController>{RightHand}/primaryButton");
+        rightBButton = CreateButtonAction("Quest Right B", "<XRController>{RightHand}/secondaryButton");
     }
 
     private void Awake()
@@ -40,6 +44,11 @@ public class QuestScriptedInputController : MonoBehaviour
         {
             rightAButton = CreateButtonAction("Quest Right A", "<XRController>{RightHand}/primaryButton");
         }
+
+        if (rightBButton.action == null)
+        {
+            rightBButton = CreateButtonAction("Quest Right B", "<XRController>{RightHand}/secondaryButton");
+        }
     }
 
     private void OnEnable()
@@ -47,6 +56,7 @@ public class QuestScriptedInputController : MonoBehaviour
         leftXButton.action?.Enable();
         leftYButton.action?.Enable();
         rightAButton.action?.Enable();
+        rightBButton.action?.Enable();
     }
 
     private void OnDisable()
@@ -54,6 +64,7 @@ public class QuestScriptedInputController : MonoBehaviour
         leftXButton.action?.Disable();
         leftYButton.action?.Disable();
         rightAButton.action?.Disable();
+        rightBButton.action?.Disable();
     }
 
     private void Update()
@@ -73,6 +84,11 @@ public class QuestScriptedInputController : MonoBehaviour
             conversationController?.NextLine();
         }
 
+        if (rightBButton.action != null && rightBButton.action.WasPressedThisFrame())
+        {
+            conversationController?.StartDemo();
+        }
+
         HandleEditorFallbackKeys();
     }
 
@@ -87,6 +103,12 @@ public class QuestScriptedInputController : MonoBehaviour
         bool startPressed = keyboard[editorStartKey].isPressed;
         bool switchPressed = keyboard[editorSwitchKey].isPressed;
         bool nextPressed = keyboard[editorNextKey].isPressed || keyboard[editorNextAltKey].isPressed;
+        bool demoStartPressed = keyboard[editorDemoStartKey].isPressed;
+
+        if (demoStartPressed && !wasEditorDemoStartPressed)
+        {
+            conversationController?.StartDemo();
+        }
 
         if (startPressed && !wasEditorStartPressed)
         {
@@ -106,6 +128,7 @@ public class QuestScriptedInputController : MonoBehaviour
         wasEditorStartPressed = startPressed;
         wasEditorSwitchPressed = switchPressed;
         wasEditorNextPressed = nextPressed;
+        wasEditorDemoStartPressed = demoStartPressed;
     }
 
     private static InputActionProperty CreateButtonAction(string name, string path)

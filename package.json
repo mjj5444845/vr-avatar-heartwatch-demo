@@ -7,10 +7,10 @@
     "apps/api"
   ],
   "scripts": {
+    "demo:start": "npm run api:start",
     "web:dev": "npm --workspace apps/web run dev",
     "web:build": "npm --workspace apps/web run build",
     "api:dev": "npm --workspace apps/api run dev",
     "api:start": "npm --workspace apps/api run start"
   }
 }
-

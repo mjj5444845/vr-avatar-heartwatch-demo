@@ -31,7 +31,7 @@ VR Avatar Demo > Build Quest 3 Demo Scene
 4. Open or save the generated scene:
 
 ```text
-Assets/Scenes/Quest3AvatarRoom.unity
+Assets/Scenes/Quest3LivingRoomAvatar.unity
 ```
 
 The scene includes:
@@ -42,9 +42,17 @@ The scene includes:
 - a world-space current heart-rate panel,
 - a world-space avatar reply panel,
 - scripts for polling SQLite API heart rate,
-- scripts for submitting speech transcripts to the LLM bridge.
+- scripts for storing scripted dialogue and demo events in SQLite.
 
 ## Quest 3 Controls
+
+The current lightweight demo controls are:
+
+- Right-hand **B**: start the whole demo and write a `demo_start` event to SQLite.
+- Right-hand **A**: next scripted dialogue line.
+- Left-hand **X**: start or replay the current script.
+- Left-hand **Y**: switch to the next script.
+- Keyboard fallback in Unity Editor: `B`, `N`/`Enter`, `X`, `Y`.
 
 The package manifest includes:
 
@@ -74,18 +82,22 @@ For account-owned assets and Meta SDK import steps, see:
 ../../docs/unity-assets-and-meta-sdk.md
 ```
 
-## Voice + LLM
+## Build Outputs
 
-`QuestVoiceInputController` exposes:
-
-```csharp
-SubmitMetaVoiceTranscript(string transcript)
-```
-
-Connect Meta Voice SDK Dictation/STT final transcript events to that method. The script sends the transcript to:
+The project includes Unity menu build commands:
 
 ```text
-POST /api/chat
+VR Avatar Demo > Build > macOS Demo App
+VR Avatar Demo > Build > Windows Demo App
+VR Avatar Demo > Build > Quest 3 Android APK
 ```
 
-The API returns an avatar reply and the reply panel updates in VR.
+They write to:
+
+```text
+../../release/macOS/VRAvatarHeartWatch.app
+../../release/Windows/VRAvatarHeartWatch.exe
+../../release/Quest3/VRAvatarHeartWatch.apk
+```
+
+Windows output requires the Unity Windows Build Support module. Quest output requires Android Build Support and the Quest/OpenXR setup.

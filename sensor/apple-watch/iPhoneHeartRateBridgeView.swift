@@ -12,6 +12,7 @@ struct iPhoneHeartRateBridgeView: View {
     @State private var isSyncing = false
     @State private var selectedTableName = "heart_rate_samples"
     @State private var vrTestStatus = "Run the checks below after starting the Mac API."
+    @State private var autoRefreshEnabled = true
 
     var body: some View {
         TabView {
@@ -38,6 +39,12 @@ struct iPhoneHeartRateBridgeView: View {
         .task {
             bridge.apiBaseURL = URL(string: apiURLText) ?? bridge.apiBaseURL
             await refreshAll()
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(3))
+                if autoRefreshEnabled {
+                    await refreshAll()
+                }
+            }
         }
     }
 
@@ -45,18 +52,27 @@ struct iPhoneHeartRateBridgeView: View {
         NavigationStack {
             List {
                 Section {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("\(dashboard.latest?.heartRate ?? bridge.lastPostedHeartRate ?? 0)")
-                            .font(.system(size: 64, weight: .bold, design: .rounded))
-                        Text("bpm")
-                            .font(.title3)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Live heart rate")
+                            .font(.headline)
                             .foregroundStyle(.secondary)
+                        HStack(alignment: .firstTextBaseline) {
+                            Text("\(dashboard.latest?.heartRate ?? bridge.lastPostedHeartRate ?? 0)")
+                                .font(.system(size: 76, weight: .bold, design: .rounded))
+                                .minimumScaleFactor(0.7)
+                            Text("bpm")
+                                .font(.title2.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                    .padding(.vertical, 8)
 
                     HStack {
                         StatusPill(title: "API", value: apiStatus)
                         StatusPill(title: "Watch", value: bridge.lastStatus)
                     }
+
+                    Toggle("Auto refresh every 3s", isOn: $autoRefreshEnabled)
 
                     if let latest = dashboard.latest {
                         LabeledContent("Zone", value: latest.zone?.name.capitalized ?? "Unknown")
@@ -69,10 +85,10 @@ struct iPhoneHeartRateBridgeView: View {
                 }
 
                 Section("Quick Test Flow") {
-                    StepRow(number: 1, title: "Mac API", detail: "Run npm run api:dev")
-                    StepRow(number: 2, title: "iPhone", detail: "Keep this app open on the same Wi-Fi")
-                    StepRow(number: 3, title: "Apple Watch", detail: "Open HeartWatch and tap Start")
-                    StepRow(number: 4, title: "VR", detail: "Quest/Unity reads /api/latest and posts chat rows")
+                    StepRow(number: 1, title: "Start demo file", detail: "Run start-demo on Mac or Windows")
+                    StepRow(number: 2, title: "Start Watch", detail: "Tap Start on Apple Watch")
+                    StepRow(number: 3, title: "Press Quest B", detail: "VR starts the demo and writes an event")
+                    StepRow(number: 4, title: "Watch this app", detail: "Heart rate, VR chat, and SQLite records update here")
                 }
 
                 Section("Heart-rate Trend") {
@@ -116,7 +132,7 @@ struct iPhoneHeartRateBridgeView: View {
         NavigationStack {
             List {
                 Section("Database Summary") {
-                    HStack {
+                    VStack(spacing: 12) {
                         MetricCard(title: "Samples", value: "\(dashboard.databaseSummary?.samples ?? dashboard.samples.count)")
                         MetricCard(title: "Events", value: "\(dashboard.databaseSummary?.events ?? dashboard.events.count)")
                         MetricCard(title: "Chat", value: "\(dashboard.databaseSummary?.chat ?? dashboard.chatMessages.count)")
@@ -182,6 +198,7 @@ struct iPhoneHeartRateBridgeView: View {
             List {
                 Section("What VR Uses") {
                     EndpointRow(method: "GET", path: "/api/latest", detail: "Heart-rate panel and avatar mood")
+                    EndpointRow(method: "POST", path: "/api/demo/start", detail: "Quest B button starts the demo")
                     EndpointRow(method: "POST", path: "/api/chat/records", detail: "Scripted user/avatar dialogue rows")
                     EndpointRow(method: "GET", path: "/api/chat", detail: "iPhone conversation history")
                 }
@@ -192,7 +209,9 @@ struct iPhoneHeartRateBridgeView: View {
                             await runVRInterfaceCheck()
                         }
                     } label: {
-                        Label("Post sample and dialogue test", systemImage: "play.circle.fill")
+                        Label("Run full interface check", systemImage: "play.circle.fill")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, minHeight: 44)
                     }
                     .buttonStyle(.borderedProminent)
 
@@ -202,6 +221,20 @@ struct iPhoneHeartRateBridgeView: View {
                 }
 
                 Section("Latest VR Records") {
+                    if let latestEvent = dashboard.demoStatus?.latestEvent {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Latest event")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                            Text(latestEvent.text)
+                                .font(.headline)
+                            Text("\(latestEvent.type) · \(latestEvent.timestamp)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 6)
+                    }
+
                     if dashboard.chatMessages.isEmpty {
                         EmptyState(icon: "bubble.left.and.bubble.right", title: "No chat rows", message: "Run the VR test or advance dialogue in Unity.")
                     } else {
@@ -251,16 +284,17 @@ struct iPhoneHeartRateBridgeView: View {
                     }
                     .buttonStyle(.bordered)
 
+                    Toggle("Auto refresh every 3s", isOn: $autoRefreshEnabled)
                     LabeledContent("API", value: apiStatus)
                     LabeledContent("Watch bridge", value: bridge.lastStatus)
                     LabeledContent("Dashboard", value: isSyncing ? "Syncing" : syncStatus)
                 }
 
                 Section("Local Setup") {
-                    StepRow(number: 1, title: "Find Mac IP", detail: "Use the Mac Wi-Fi address, not 127.0.0.1")
-                    StepRow(number: 2, title: "Start API", detail: "npm run api:dev")
-                    StepRow(number: 3, title: "Set URL", detail: "http://YOUR_MAC_IP:8787")
-                    StepRow(number: 4, title: "Start Watch", detail: "Open HeartWatch on Apple Watch")
+                    StepRow(number: 1, title: "Run one start file", detail: "Mac: scripts/start-demo-macos.command")
+                    StepRow(number: 2, title: "Set this API URL", detail: "Use http://YOUR_COMPUTER_IP:8787")
+                    StepRow(number: 3, title: "Start Watch", detail: "Open HeartWatch on Apple Watch")
+                    StepRow(number: 4, title: "Start VR", detail: "Press B on the right Quest controller")
                 }
             }
             .navigationTitle("Settings")
@@ -367,14 +401,14 @@ private struct StatusPill: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.caption)
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.footnote.weight(.semibold))
+                .font(.body.weight(.semibold))
                 .lineLimit(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
+        .padding(14)
         .background(.thinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
@@ -387,13 +421,13 @@ private struct MetricCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(value)
-                .font(.title2.bold())
+                .font(.largeTitle.bold())
             Text(title)
-                .font(.caption)
+                .font(.headline)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
+        .padding(16)
         .background(.thinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
@@ -407,19 +441,19 @@ private struct StepRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Text("\(number)")
-                .font(.caption.bold())
-                .frame(width: 24, height: 24)
+                .font(.headline.bold())
+                .frame(width: 32, height: 32)
                 .background(Color.accentColor.opacity(0.16))
                 .clipShape(Circle())
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.headline)
+                    .font(.title3.weight(.semibold))
                 Text(detail)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
     }
 }
 
@@ -432,19 +466,20 @@ private struct EndpointRow: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(method)
-                    .font(.caption.bold())
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
+                    .font(.subheadline.bold())
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
                     .background(Color.accentColor.opacity(0.16))
                     .clipShape(RoundedRectangle(cornerRadius: 5))
                 Text(path)
-                    .font(.system(.subheadline, design: .monospaced))
+                    .font(.system(.body, design: .monospaced))
+                    .minimumScaleFactor(0.8)
             }
             Text(detail)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 3)
+        .padding(.vertical, 7)
     }
 }
 
@@ -456,15 +491,15 @@ private struct EmptyState: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Image(systemName: icon)
-                .font(.title2)
+                .font(.largeTitle)
                 .foregroundStyle(.secondary)
             Text(title)
-                .font(.headline)
+                .font(.title3.weight(.semibold))
             Text(message)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 18)
     }
 }
 

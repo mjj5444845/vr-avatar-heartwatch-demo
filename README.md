@@ -11,6 +11,33 @@ Lightweight repo template for a Quest 3 Unity VR avatar that reacts to live Appl
 
 The Web page in `apps/web/` is now a static project README for Vercel/GitHub Pages, not the live dashboard.
 
+## 展示版一键启动
+
+这个 repo 现在按“轻量化展示应用”组织：展示时先启动一个本地 SQLite 后端，然后 iPhone/Apple Watch 和 Quest 3 都连接到同一个局域网 API。
+
+macOS 双击或运行：
+
+```bash
+./scripts/start-demo-macos.command
+```
+
+Windows PowerShell 运行：
+
+```powershell
+.\scripts\start-demo-windows.ps1
+```
+
+启动脚本会：
+
+1. 启动 SQLite API。
+2. 打印当前电脑的局域网 API 地址，例如 `http://192.168.1.20:8787`。
+3. 优先打开已经构建好的 Unity 成品应用。
+4. 如果还没有构建成品，则打开 Unity 项目。
+
+iPhone App 里把 API URL 设置为脚本打印的地址。Apple Watch 打开 HeartWatch 并点击 **Start**。Quest 3 里点击右手柄 **B** 键启动整个 VR demo。
+
+更详细的展示版应用说明见 `docs/demo-application.md`。
+
 ## Lightweight Architecture
 
 ```mermaid
@@ -22,6 +49,14 @@ flowchart LR
   API --> Unity["Unity Quest 3 App"]
   Unity --> Avatar["VR Avatar Mood"]
 ```
+
+## Demo Runtime Contract
+
+- **B key in Quest 3**: starts the demo and writes `demo_start` into SQLite through `POST /api/demo/start`.
+- **Apple Watch**: streams heart rate to iPhone every few seconds.
+- **iPhone App**: posts Watch samples to `POST /api/samples`, then reads chart/data/VR records from the API.
+- **Unity/Quest**: polls `GET /api/latest`, updates the VR heart-rate panel, and writes conversation rows to `POST /api/chat/records`.
+- **SQLite**: stores the demo like a small game backend: sensor samples, avatar messages, VR events, and chat rows.
 
 ## Project Structure
 
@@ -65,9 +100,12 @@ npm run api:dev
 
 The API writes to `apps/api/data/demo.sqlite` and exposes:
 
+- `GET /api/demo/status`
+- `POST /api/demo/start`
 - `POST /api/samples`
 - `GET /api/samples`
 - `GET /api/latest`
+- `GET /api/db/tables`
 - `GET /api/events`
 - `POST /api/chat/records`
 - `GET /api/chat`
@@ -122,8 +160,8 @@ The included Swift files are split by target:
 2. Install the iPhone app and Watch app from Xcode.
 3. Open the Watch app, tap **Start**, and approve heart-rate access.
 4. Watch the iPhone app chart and records update.
-5. Run Unity on Quest 3 and let the heart-rate panel follow the latest sample.
-6. Use X/Y/A or keyboard X/Y/N to drive scripted dialogue and store conversation rows in SQLite.
+5. Run Unity on Quest 3 and press right-hand **B** to start the whole demo.
+6. Use **A** for next dialogue, **X** to replay, **Y** to switch scripts, or keyboard `B/X/Y/N` in the Unity Editor.
 7. Tap Sync in the iPhone app and inspect conversation records.
 
 ## Completion Notes

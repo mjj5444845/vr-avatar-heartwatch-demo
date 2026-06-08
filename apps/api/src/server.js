@@ -4,6 +4,7 @@ import { createAvatarMessage, db, getZone } from "./db.js";
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
+const host = process.env.HOST || "0.0.0.0";
 
 app.use(cors());
 app.use(express.json());
@@ -31,6 +32,61 @@ app.get("/api/db/summary", (_request, response) => {
     chat,
     latest: latest ? { ...latest, zone: getZone(latest.heartRate) } : null
   });
+});
+
+app.get("/api/demo/status", (_request, response) => {
+  const latest = db.prepare(`
+    SELECT id, source, heart_rate AS heartRate, timestamp
+    FROM heart_rate_samples
+    ORDER BY timestamp DESC
+    LIMIT 1
+  `).get();
+  const latestEvent = db.prepare(`
+    SELECT id, type, text, timestamp
+    FROM vr_events
+    ORDER BY timestamp DESC
+    LIMIT 1
+  `).get();
+  const latestChat = db.prepare(`
+    SELECT
+      id,
+      role,
+      text,
+      message_type AS messageType,
+      conversation_initiator AS conversationInitiator,
+      heart_rate AS heartRate,
+      zone,
+      timestamp
+    FROM chat_messages
+    ORDER BY timestamp DESC
+    LIMIT 1
+  `).get();
+
+  response.json({
+    ok: true,
+    database: "sqlite",
+    latest: latest ? { ...latest, zone: getZone(latest.heartRate) } : null,
+    latestEvent,
+    latestChat,
+    tables: getDemoTableNames()
+  });
+});
+
+app.post("/api/demo/start", (request, response) => {
+  const source = String(request.body.source || "vr").trim();
+  const event = {
+    id: request.body.id || crypto.randomUUID(),
+    type: "demo_start",
+    text: request.body.text || `Demo started from ${source}`,
+    timestamp: request.body.timestamp || new Date().toISOString()
+  };
+
+  db.prepare(`
+    INSERT OR REPLACE INTO vr_events (id, type, text, timestamp)
+    VALUES (@id, @type, @text, @timestamp)
+  `).run(event);
+
+  response.status(201).json({ ok: true, event });
 });
 
 app.get("/api/db/tables", (_request, response) => {
@@ -249,8 +305,8 @@ app.get("/api/chat", (_request, response) => {
   response.json(rows);
 });
 
-app.listen(port, () => {
-  console.log(`SQLite API listening on http://localhost:${port}`);
+app.listen(port, host, () => {
+  console.log(`SQLite API listening on http://${host}:${port}`);
 });
 
 function normalizeSample(body) {

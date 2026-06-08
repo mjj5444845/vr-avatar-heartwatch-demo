@@ -10,6 +10,7 @@ struct HeartWatchAPIClient {
         async let chat: [ChatMessageRecord] = fetchArray("/api/chat")
         async let databaseSummary: DatabaseSummaryRecord? = fetchOptional("/api/db/summary")
         async let databaseTables: DatabaseTablesResponse? = fetchOptional("/api/db/tables")
+        async let demoStatus: DemoStatusRecord? = fetchOptional("/api/demo/status")
 
         return try await HeartWatchDashboardData(
             latest: latest,
@@ -17,7 +18,8 @@ struct HeartWatchAPIClient {
             events: events,
             chatMessages: chat,
             databaseSummary: databaseSummary,
-            databaseTables: databaseTables?.tables ?? []
+            databaseTables: databaseTables?.tables ?? [],
+            demoStatus: demoStatus
         )
     }
 

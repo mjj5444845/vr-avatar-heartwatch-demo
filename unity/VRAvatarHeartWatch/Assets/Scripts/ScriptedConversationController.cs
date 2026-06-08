@@ -15,6 +15,14 @@ public class ChatRecordRequest
     public string zone;
 }
 
+[Serializable]
+public class DemoEventRequest
+{
+    public string type;
+    public string text;
+    public string source;
+}
+
 public class ScriptedConversationController : MonoBehaviour
 {
     public string apiBaseUrl = "http://127.0.0.1:8787";
@@ -102,6 +110,23 @@ public class ScriptedConversationController : MonoBehaviour
         StartCoroutine(ProactiveHeartRateTopics());
     }
 
+    public void StartDemo()
+    {
+        scenarioIndex = 0;
+        scenarioRunning = false;
+        lineIndex = -1;
+        lastInteractionTime = Time.time;
+        lastProactiveTopicTime = Time.time;
+
+        HeartRateSample sample = heartRateReceiver?.LatestSample;
+        string message = sample == null
+            ? "Demo started. Waiting for live Apple Watch heart-rate data."
+            : $"Demo started. Latest heart rate is {sample.heartRate} bpm in the {sample.zone?.name ?? "unknown"} zone.";
+
+        DisplayAndRecord("system", "system", "avatar", message, sample, AvatarMotionCue.Salute);
+        StartCoroutine(PostDemoStartEvent(message));
+    }
+
     public void StartCurrentScenario()
     {
         scenarioRunning = true;
@@ -146,7 +171,7 @@ public class ScriptedConversationController : MonoBehaviour
     private void ShowReadyPrompt()
     {
         ScriptedScenario scenario = Scenarios[scenarioIndex];
-        dialoguePanel?.SetReply($"Scene {scenarioIndex + 1}: {scenario.Name}. Press X to start, Y to switch, N/Enter or A for next.");
+        dialoguePanel?.SetReply($"Scene {scenarioIndex + 1}: {scenario.Name}. Press B to start demo. X starts, Y switches, A advances.");
     }
 
     private IEnumerator ProactiveHeartRateTopics()
@@ -211,6 +236,24 @@ public class ScriptedConversationController : MonoBehaviour
 
         string json = JsonUtility.ToJson(payload);
         using UnityWebRequest request = new UnityWebRequest($"{apiBaseUrl}/api/chat/records", "POST");
+        byte[] body = Encoding.UTF8.GetBytes(json);
+        request.uploadHandler = new UploadHandlerRaw(body);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+        yield return request.SendWebRequest();
+    }
+
+    private IEnumerator PostDemoStartEvent(string text)
+    {
+        DemoEventRequest payload = new DemoEventRequest
+        {
+            type = "demo_start",
+            text = text,
+            source = "quest_3"
+        };
+
+        string json = JsonUtility.ToJson(payload);
+        using UnityWebRequest request = new UnityWebRequest($"{apiBaseUrl}/api/demo/start", "POST");
         byte[] body = Encoding.UTF8.GetBytes(json);
         request.uploadHandler = new UploadHandlerRaw(body);
         request.downloadHandler = new DownloadHandlerBuffer();

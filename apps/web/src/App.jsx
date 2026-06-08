@@ -4,12 +4,12 @@ import { Apple, CheckCircle2, Database, Gamepad2, GitBranch, HeartPulse, PlayCir
 import "./styles.css";
 
 const setupSteps = [
-  "Run the SQLite API on the Mac.",
-  "Install the iPhone app and paired Watch app from Xcode.",
-  "Set the iPhone app API base URL to the Mac LAN address.",
-  "Start the Watch heart-rate workout stream.",
-  "Open the Unity Quest 3 scene and point it at the same API.",
-  "Use Quest controls to drive scripted dialogue and inspect records in the iPhone app."
+  "Run scripts/start-demo-macos.command or scripts/start-demo-windows.ps1.",
+  "Set the iPhone app API base URL to the printed computer LAN address.",
+  "Start the Apple Watch heart-rate workout stream.",
+  "Open the Unity Quest 3 scene or built app on the same network.",
+  "Press the right-hand B button in Quest 3 to start the demo.",
+  "Inspect live heart rate, SQLite tables, VR events, and conversation rows in the iPhone app."
 ];
 
 const developerModeSteps = [
@@ -20,9 +20,12 @@ const developerModeSteps = [
 ];
 
 const endpoints = [
+  ["GET", "/api/demo/status", "Single demo status for app and smoke tests"],
+  ["POST", "/api/demo/start", "Quest B button demo-start event"],
   ["POST", "/api/samples", "Apple Watch heart-rate samples"],
   ["GET", "/api/latest", "Unity VR current heart-rate panel"],
   ["GET", "/api/samples", "iPhone chart and heart-rate history"],
+  ["GET", "/api/db/tables", "iPhone SQLite table browser"],
   ["GET", "/api/events", "Avatar zone messages and VR events"],
   ["POST", "/api/chat/records", "Unity scripted conversation records"],
   ["GET", "/api/chat", "iPhone conversation table"]
@@ -36,8 +39,8 @@ export default function App() {
           <p className="eyebrow">Quest 3 + Apple Watch + iPhone + SQLite</p>
           <h1>VR Avatar HeartWatch Demo</h1>
           <p className="lead">
-            A lightweight demo where Apple Watch heart rate drives a scripted VR avatar, records data in SQLite,
-            and shows the live stream, chart, VR events, and conversation logs inside an installable iPhone app.
+            A lightweight presentation app where Apple Watch heart rate flows into SQLite, Quest 3 reads the same
+            backend in VR, and the iPhone app shows the live chart, database tables, VR events, and dialogue history.
           </p>
         </div>
         <div className="system-card" aria-label="System architecture">
@@ -67,8 +70,8 @@ export default function App() {
 
       <section className="docs-section">
         <InfoPanel title="Mac API" icon={<Database />}>
-          <p>Install dependencies and start the local SQLite API:</p>
-          <CodeBlock code={"npm install\nnpm run api:dev"} />
+          <p>For a presentation, start the local SQLite backend with one file:</p>
+          <CodeBlock code={"./scripts/start-demo-macos.command\n# or on Windows\n.\\scripts\\start-demo-windows.ps1"} />
           <p>For iPhone and Quest 3, use the Mac LAN address, not localhost:</p>
           <CodeBlock code={"http://YOUR_MAC_IP:8787"} />
         </InfoPanel>
@@ -117,11 +120,12 @@ export default function App() {
 
         <InfoPanel title="Test Checklist" icon={<CheckCircle2 />}>
           <ul className="clean-list">
-            <li><code>GET /api/health</code> returns <code>{"{ ok: true }"}</code>.</li>
+            <li><code>GET /api/demo/status</code> returns the current backend, latest sample, latest event, and latest chat row.</li>
             <li>Watch app shows a current bpm value after Start and Health permission approval.</li>
-            <li>iPhone app shows "Posted to API" and updates the chart after Sync.</li>
+            <li>iPhone app updates every 3 seconds while the API is online.</li>
             <li>Unity heart-rate panel updates from <code>/api/latest</code>.</li>
-            <li>Unity X/Y/A dialogue controls create rows visible in the iPhone app conversation view.</li>
+            <li>Quest right-hand B writes a demo-start event visible in the iPhone app.</li>
+            <li>Unity A/X/Y dialogue controls create rows visible in the iPhone app conversation view.</li>
           </ul>
         </InfoPanel>
       </section>
